@@ -19,6 +19,7 @@
     --muted-text:#9a8d77;
     --accent:#e8a33d;
     --accent-soft:#e8a33d22;
+    --danger:#d9705c;
     --radius:18px;
   }
   *{margin:0;padding:0;box-sizing:border-box}
@@ -34,7 +35,6 @@
       radial-gradient(700px 500px at -10% 110%, #e8a33d0d, transparent 55%);
     background-attachment:fixed;
   }
-  /* sottile texture a puntini per dare profondità */
   body::before{
     content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0;
     background-image:radial-gradient(var(--muted) .5px, transparent .5px);
@@ -44,7 +44,50 @@
   }
   .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:64px 28px 96px}
 
-  header{margin-bottom:44px}
+  /* ─────────── schermata di accesso ─────────── */
+  .lock{
+    position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:28px;
+    background:var(--bg);
+    background-image:radial-gradient(700px 460px at 50% 0%, #e8a33d16, transparent 65%);
+  }
+  .lock-box{width:100%;max-width:400px;text-align:center}
+  .lock-mark{
+    width:64px;height:64px;margin:0 auto 22px;border-radius:20px;display:grid;place-items:center;
+    font-size:1.7rem;background:var(--bg-2);border:1px solid var(--line);
+  }
+  .lock h2{font-family:'Fraunces',serif;font-weight:500;font-size:1.9rem;letter-spacing:-.01em}
+  .lock p{color:var(--muted-text);font-size:.94rem;margin-top:10px}
+  .lock form{margin-top:26px;display:flex;flex-direction:column;gap:12px}
+  .lock-err{color:var(--danger);font-size:.86rem;min-height:1.1em}
+
+  input,textarea,select{
+    width:100%;background:var(--bg-2);border:1px solid var(--line);
+    color:var(--text);font-family:inherit;font-size:.98rem;
+    padding:13px 15px;border-radius:13px;outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+  input::placeholder,textarea::placeholder{color:var(--muted-text)}
+  textarea{resize:vertical;min-height:74px;line-height:1.5}
+  label{display:block;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;
+        color:var(--muted-text);font-weight:600;margin-bottom:7px}
+
+  .btn{
+    font-family:inherit;font-size:.92rem;font-weight:600;cursor:pointer;
+    padding:12px 18px;border-radius:13px;border:1px solid var(--line);
+    background:var(--bg-2);color:var(--text);
+    transition:border-color .2s, background .2s, transform .15s;
+  }
+  .btn:hover{border-color:#5a4e3c;background:var(--card-hover)}
+  .btn:active{transform:scale(.98)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#20180a}
+  .btn.primary:hover{background:#f0b258;border-color:#f0b258}
+  .btn.ghost{background:transparent}
+  .btn.danger{color:var(--danger)}
+  .btn.sm{padding:8px 13px;font-size:.84rem;border-radius:10px}
+
+  /* ─────────── testata ─────────── */
+  header{margin-bottom:30px}
   .kicker{
     font-size:12px;letter-spacing:.32em;text-transform:uppercase;
     color:var(--accent);font-weight:600;margin-bottom:14px;
@@ -61,20 +104,26 @@
     opacity:0;animation:rise .7s .2s forwards;
   }
 
+  .tabs{
+    display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:30px 0 4px;
+    opacity:0;animation:rise .7s .26s forwards;
+  }
+  .tab{
+    font-family:inherit;font-size:.92rem;font-weight:600;cursor:pointer;
+    padding:10px 16px;border-radius:12px;border:1px solid transparent;
+    background:transparent;color:var(--muted-text);transition:all .2s;
+  }
+  .tab:hover{color:var(--text)}
+  .tab.on{background:var(--card);border-color:var(--line);color:var(--text)}
+  .tabs .spacer{flex:1}
+
   .toolbar{
-    margin:36px 0 30px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;
-    opacity:0;animation:rise .7s .28s forwards;
+    margin:26px 0 6px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;
+    opacity:0;animation:rise .7s .3s forwards;
   }
-  .search{position:relative;flex:1;min-width:240px}
+  .search{position:relative;flex:1;min-width:220px}
   .search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);opacity:.5}
-  .search input{
-    width:100%;background:var(--bg-2);border:1px solid var(--line);
-    color:var(--text);font-family:inherit;font-size:.98rem;
-    padding:14px 16px 14px 46px;border-radius:14px;outline:none;
-    transition:border-color .2s, box-shadow .2s;
-  }
-  .search input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
-  .search input::placeholder{color:var(--muted-text)}
+  .search input{padding-left:46px;border-radius:14px;padding-top:14px;padding-bottom:14px}
   .count{font-size:.85rem;color:var(--muted-text);white-space:nowrap}
 
   .group-title{
@@ -113,14 +162,97 @@
     font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;font-weight:600;
     color:var(--accent);background:var(--accent-soft);padding:4px 9px;border-radius:7px;
   }
-  /* stato "link da impostare" */
   .card.todo{opacity:.62}
   .card.todo .icon{filter:grayscale(1)}
   .card.todo .arrow{display:none}
   .tag.warn{color:#e8a33d;background:transparent;border:1px dashed #5a4e3c}
   .tag.lock{color:var(--muted-text);background:transparent;border:1px solid var(--line)}
 
-  .empty{text-align:center;color:var(--muted-text);padding:60px 20px;font-size:1.05rem;display:none}
+  /* azioni sulla card */
+  .card-actions{
+    position:absolute;top:14px;right:14px;display:flex;gap:6px;z-index:3;
+    opacity:0;transition:opacity .2s;
+  }
+  .card:hover .card-actions,.card:focus-within .card-actions{opacity:1}
+  .mini{
+    width:30px;height:30px;border-radius:9px;display:grid;place-items:center;cursor:pointer;
+    background:var(--bg-2);border:1px solid var(--line);color:var(--muted-text);
+    font-size:.82rem;transition:all .18s;
+  }
+  .mini:hover{color:var(--text);border-color:#5a4e3c}
+  .mini.del:hover{color:var(--danger);border-color:var(--danger)}
+  .card:hover .arrow{opacity:0}
+
+  /* card "aggiungi" */
+  .card.add{
+    align-items:center;justify-content:center;text-align:center;gap:8px;
+    border-style:dashed;background:transparent;color:var(--muted-text);
+    min-height:170px;cursor:pointer;
+  }
+  .card.add:hover{color:var(--text);background:var(--card)}
+  .card.add .plus{font-size:1.7rem;line-height:1}
+
+  /* ─────────── password ─────────── */
+  .vault-list{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+  .vrow{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+    opacity:0;transform:translateY(10px);animation:rise .5s forwards;
+    transition:border-color .2s;
+  }
+  .vrow:hover{border-color:#5a4e3c}
+  .vmain{flex:1;min-width:200px}
+  .vmain h4{font-size:1.05rem;font-weight:600;display:flex;align-items:center;gap:8px}
+  .vmain h4 a{color:var(--accent);text-decoration:none;font-size:.8rem;font-weight:600}
+  .vmeta{color:var(--muted-text);font-size:.88rem;margin-top:5px;word-break:break-all}
+  .vnote{color:var(--muted-text);font-size:.84rem;margin-top:8px;line-height:1.5;white-space:pre-wrap}
+  .secret{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92rem;
+    background:var(--bg-2);border:1px solid var(--line);border-radius:10px;
+    padding:8px 12px;letter-spacing:.04em;min-width:150px;
+  }
+  .vactions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+
+  .empty{text-align:center;color:var(--muted-text);padding:56px 20px;font-size:1rem}
+  .empty strong{display:block;color:var(--text);font-family:'Fraunces',serif;
+                font-size:1.25rem;font-weight:500;margin-bottom:8px}
+
+  .notice{
+    margin-top:22px;border:1px solid var(--line);border-radius:14px;
+    padding:14px 18px;color:var(--muted-text);font-size:.86rem;line-height:1.55;
+    background:var(--bg-2);
+  }
+
+  /* ─────────── finestre ─────────── */
+  .modal{
+    position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:24px;
+    background:#0b0907cc;backdrop-filter:blur(4px);
+  }
+  .modal.on{display:grid}
+  .sheet{
+    width:100%;max-width:520px;max-height:88vh;overflow:auto;
+    background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px;
+    animation:pop .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .sheet h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.5rem;margin-bottom:4px}
+  .sheet .hint{color:var(--muted-text);font-size:.88rem;margin-bottom:20px}
+  .field{margin-bottom:16px}
+  .field.row{display:flex;gap:12px}
+  .field.row>div{flex:1}
+  .check{display:flex;align-items:center;gap:10px;color:var(--muted-text);font-size:.92rem;cursor:pointer}
+  .check input{width:auto;padding:0}
+  .sheet-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
+  .sheet-actions .left{margin-right:auto}
+  .with-btn{display:flex;gap:8px}
+  .with-btn input{flex:1}
+
+  .toast{
+    position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);
+    background:var(--card);border:1px solid var(--line);border-radius:13px;
+    padding:12px 20px;font-size:.9rem;z-index:70;opacity:0;pointer-events:none;
+    transition:opacity .25s, transform .25s;
+  }
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
   footer{
     margin-top:60px;text-align:center;color:var(--muted-text);font-size:.82rem;
@@ -132,176 +264,689 @@
   }
 
   @keyframes rise{to{opacity:1;transform:none}}
-  @media (max-width:520px){.wrap{padding:44px 20px 70px}.grid{grid-template-columns:1fr}}
+  @keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+  @media (max-width:520px){
+    .wrap{padding:44px 20px 70px}
+    .grid{grid-template-columns:1fr}
+    .field.row{flex-direction:column;gap:16px}
+    .card-actions{opacity:1}
+    .card:hover .arrow{opacity:.4}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<!-- ══════════ ACCESSO ══════════ -->
+<div class="lock" id="lock">
+  <div class="lock-box">
+    <div class="lock-mark">🔐</div>
+    <h2>Hub personale</h2>
+    <p>Inserisci la password per entrare.</p>
+    <form id="lockForm" autocomplete="off">
+      <input id="lockPw" type="password" placeholder="Password" autocomplete="current-password">
+      <div class="lock-err" id="lockErr"></div>
+      <button class="btn primary" type="submit">Entra</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════ HUB ══════════ -->
+<div class="wrap" id="app" style="display:none">
   <header>
     <div class="kicker">Centro di comando</div>
     <h1>I tuoi <em>programmi</em>,<br>in un posto solo.</h1>
     <p class="sub">Un punto di partenza per raggiungere ogni applicazione. Cerca, clicca, sei dentro.</p>
   </header>
 
-  <div class="toolbar">
-    <div class="search">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input id="search" type="text" placeholder="Cerca un programma…  (premi  /  )" autocomplete="off">
-    </div>
-    <div class="count" id="count"></div>
-  </div>
+  <nav class="tabs">
+    <button class="tab on" data-view="hub">Programmi</button>
+    <button class="tab" data-view="vault">Password</button>
+    <span class="spacer"></span>
+    <button class="tab" id="btnSettings" title="Impostazioni">⚙︎</button>
+    <button class="tab" id="btnLock" title="Blocca">Blocca</button>
+  </nav>
 
-  <div id="board"></div>
-  <div class="empty" id="empty">Nessun programma trovato.</div>
+  <!-- vista programmi -->
+  <section id="viewHub">
+    <div class="toolbar">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search" type="text" placeholder="Cerca un programma…  (premi  /  )" autocomplete="off">
+      </div>
+      <div class="count" id="count"></div>
+      <button class="btn primary" id="btnAddApp">+ Aggiungi programma</button>
+    </div>
+    <div id="board"></div>
+  </section>
+
+  <!-- vista password -->
+  <section id="viewVault" style="display:none">
+    <div class="toolbar">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="vsearch" type="text" placeholder="Cerca un sito, un utente…" autocomplete="off">
+      </div>
+      <div class="count" id="vcount"></div>
+      <button class="btn primary" id="btnAddEntry">+ Aggiungi password</button>
+    </div>
+    <div class="vault-list" id="vaultList"></div>
+    <div class="notice" id="cryptoNote"></div>
+  </section>
 
   <footer>
-    Hub personale · per aggiungere un programma modifica la lista <kbd>APPS</kbd> all'inizio del file
+    Hub personale · i dati restano su questo browser · <kbd>/</kbd> per cercare
   </footer>
 </div>
 
+<!-- ══════════ FINESTRA PROGRAMMA ══════════ -->
+<div class="modal" id="appModal">
+  <div class="sheet">
+    <h3 id="appModalTitle">Nuovo programma</h3>
+    <p class="hint">Compila i campi: la card compare subito nell'hub.</p>
+    <div class="field row">
+      <div style="max-width:110px">
+        <label>Icona</label>
+        <input id="fIcon" maxlength="4" placeholder="🚀">
+      </div>
+      <div>
+        <label>Nome</label>
+        <input id="fName" placeholder="Nome del programma">
+      </div>
+    </div>
+    <div class="field">
+      <label>Descrizione</label>
+      <input id="fDesc" placeholder="Cosa fa, in una riga.">
+    </div>
+    <div class="field">
+      <label>Indirizzo</label>
+      <input id="fUrl" placeholder="https://… (lascia vuoto se non ce l'hai ancora)">
+    </div>
+    <div class="field row">
+      <div>
+        <label>Etichette</label>
+        <input id="fTags" placeholder="Gestione, Firebase">
+      </div>
+      <div>
+        <label>Gruppo</label>
+        <input id="fGroup" list="groupList" placeholder="Futsal Fabbrico ASD">
+        <datalist id="groupList"></datalist>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="fLocked"> Richiede un codice d'accesso</label>
+    <div class="sheet-actions">
+      <button class="btn ghost danger left" id="btnDelApp" style="display:none">Elimina</button>
+      <button class="btn ghost" data-close>Annulla</button>
+      <button class="btn primary" id="btnSaveApp">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ FINESTRA PASSWORD ══════════ -->
+<div class="modal" id="entryModal">
+  <div class="sheet">
+    <h3 id="entryModalTitle">Nuova password</h3>
+    <p class="hint">Salvata cifrata in questo browser.</p>
+    <div class="field">
+      <label>Sito o servizio</label>
+      <input id="eSite" placeholder="Gestionale Futsal">
+    </div>
+    <div class="field">
+      <label>Indirizzo</label>
+      <input id="eUrl" placeholder="https://…">
+    </div>
+    <div class="field">
+      <label>Utente</label>
+      <input id="eUser" placeholder="email o nome utente">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <div class="with-btn">
+        <input id="ePass" type="text" placeholder="password o codice">
+        <button class="btn" id="btnGen" title="Genera">Genera</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Note</label>
+      <textarea id="eNote" placeholder="Domanda di sicurezza, codice di recupero, ecc."></textarea>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost danger left" id="btnDelEntry" style="display:none">Elimina</button>
+      <button class="btn ghost" data-close>Annulla</button>
+      <button class="btn primary" id="btnSaveEntry">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ IMPOSTAZIONI ══════════ -->
+<div class="modal" id="setModal">
+  <div class="sheet">
+    <h3>Impostazioni</h3>
+    <p class="hint">Backup, ripristino e password d'accesso.</p>
+
+    <div class="field">
+      <label>Backup</label>
+      <div class="with-btn">
+        <button class="btn" id="btnExport">Esporta backup</button>
+        <button class="btn" id="btnImport">Importa backup</button>
+      </div>
+      <input type="file" id="fileImport" accept="application/json" style="display:none">
+    </div>
+
+    <div class="field">
+      <label>Cambia password d'accesso</label>
+      <input id="sOld" type="password" placeholder="Password attuale" autocomplete="off" style="margin-bottom:10px">
+      <input id="sNew" type="password" placeholder="Nuova password" autocomplete="off">
+      <button class="btn" id="btnChangePw" style="margin-top:10px">Aggiorna password</button>
+    </div>
+
+    <div class="field">
+      <label>Lista programmi</label>
+      <button class="btn ghost danger" id="btnReset">Ripristina la lista iniziale</button>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn primary" data-close>Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
 /* ════════════════════════════════════════════════════════════════════
-   I TUOI PROGRAMMI  —  modifica solo questa lista.
-
-   Per aggiungerne uno nuovo, copia un blocco { ... } e cambia i campi:
-     icon     → un'emoji (o lascia "")
-     name     → nome del programma
-     desc     → breve descrizione
-     url      → il link.  Lascia "#" finché non hai l'indirizzo:
-                la card resterà segnata come "da impostare".
-     tags     → etichette, es: ["Contabilità","Firebase"]
-     group    → categoria con cui raggrupparlo (es. "Futsal Fabbrico")
+   LISTA INIZIALE — serve solo al primo avvio su un browser nuovo.
+   Da qui in poi programmi e password si gestiscono dall'interfaccia.
    ════════════════════════════════════════════════════════════════════ */
-const APPS = [
-  {
-    icon:"⚽",
-    name:"Sito Futsal Fabbrico",
+const SEED_APPS = [
+  { icon:"⚽", name:"Sito Futsal Fabbrico",
     desc:"Sito ufficiale: squadra, stagione, risultati e Torneo del Prete.",
     url:"https://torneodelpretefavreg.github.io/tdp/",
-    tags:["Sito","Pubblico"],
-    group:"Futsal Fabbrico ASD"
-  },
-  {
-    icon:"👥",
-    name:"Gestionale Futsal Fabbrico",
+    tags:["Sito","Pubblico"], group:"Futsal Fabbrico ASD" },
+  { icon:"👥", name:"Gestionale Futsal Fabbrico",
     desc:"Rosa, documenti, tesseramenti, allenamenti e costi/ricavi della squadra.",
     url:"https://torneodelpretefavreg.github.io/futsal/",
-    tags:["Gestione","Firebase"],
-    group:"Futsal Fabbrico ASD",
-    locked:true
-  },
-  {
-    icon:"📒",
-    name:"Contabilità Futsal Fabbrico",
+    tags:["Gestione","Firebase"], group:"Futsal Fabbrico ASD", locked:true },
+  { icon:"📒", name:"Contabilità Futsal Fabbrico",
     desc:"Gestionale di partita doppia: piano dei conti, bilancio, cespiti e report.",
     url:"https://torneodelpretefavreg.github.io/contabilit-/",
-    tags:["Contabilità","Firebase"],
-    group:"Futsal Fabbrico ASD",
-    locked:true
-  },
-  {
-    icon:"🗂️",
-    name:"TdP Manager",
+    tags:["Contabilità","Firebase"], group:"Futsal Fabbrico ASD", locked:true },
+  { icon:"🗂️", name:"TdP Manager",
     desc:"Gestione del torneo: squadre, calendario e organizzazione dell'evento.",
     url:"https://torneodelpretefavreg.github.io/master/",
-    tags:["Gestione"],
-    group:"Torneo del Prete",
-    locked:true
-  },
-  {
-    icon:"💶",
-    name:"CassaPro",
+    tags:["Gestione"], group:"Torneo del Prete", locked:true },
+  { icon:"💶", name:"CassaPro",
     desc:"Cassa POS mobile per il Torneo del Prete, con sincronizzazione e scontrini.",
     url:"https://torneodelpretefavreg.github.io/cassapro/",
-    tags:["POS","Eventi"],
-    group:"Torneo del Prete",
-    locked:true
-  },
-  // ── nuovo programma: copia il blocco qui sotto ──
-  // {
-  //   icon:"🚀",
-  //   name:"Nome programma",
-  //   desc:"Cosa fa, in una riga.",
-  //   url:"https://…",
-  //   tags:["Etichetta"],
-  //   group:"Generale",
-  //   locked:false        // metti true se richiede un codice d'accesso
-  // },
+    tags:["POS","Eventi"], group:"Torneo del Prete", locked:true },
 ];
-/* ════════════════════════════════════════════════════════════════════ */
 
-const board = document.getElementById('board');
-const search = document.getElementById('search');
-const count = document.getElementById('count');
-const empty = document.getElementById('empty');
+const DEFAULT_PW = "Futsal 2026";
 
+const K_APPS  = "hub_apps_v1";
+const K_VAULT = "hub_vault_v1";
+const K_AUTH  = "hub_auth_v1";
+const K_SEED  = "hub_seeded_v1";
+const S_PW    = "hub_session_pw";
+
+/* ─────────── cifratura ─────────── */
+const ENC = new TextEncoder(), DEC = new TextDecoder();
+const SUB = (window.crypto && window.crypto.subtle) ? window.crypto.subtle : null;
+const ITER = 150000;
+
+const b64e = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const b64d = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+const rand = n => crypto.getRandomValues(new Uint8Array(n));
+
+async function deriveKey(pw, salt){
+  const base = await SUB.importKey("raw", ENC.encode(pw), "PBKDF2", false, ["deriveKey"]);
+  return SUB.deriveKey({name:"PBKDF2", salt, iterations:ITER, hash:"SHA-256"},
+                       base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+}
+async function hashPw(pw, salt){
+  const base = await SUB.importKey("raw", ENC.encode(pw), "PBKDF2", false, ["deriveBits"]);
+  return b64e(await SUB.deriveBits({name:"PBKDF2", salt, iterations:ITER, hash:"SHA-256"}, base, 256));
+}
+function xorEnc(pw, text){
+  const t = ENC.encode(text), k = ENC.encode(pw), o = new Uint8Array(t.length);
+  for(let i=0;i<t.length;i++) o[i] = t[i] ^ k[i % k.length];
+  return b64e(o);
+}
+function xorDec(pw, str){
+  const d = b64d(str), k = ENC.encode(pw), o = new Uint8Array(d.length);
+  for(let i=0;i<d.length;i++) o[i] = d[i] ^ k[i % k.length];
+  return DEC.decode(o);
+}
+async function sealVault(pw, obj){
+  const json = JSON.stringify(obj);
+  if(SUB){
+    const salt = rand(16), iv = rand(12);
+    const key = await deriveKey(pw, salt);
+    const ct = await SUB.encrypt({name:"AES-GCM", iv}, key, ENC.encode(json));
+    return {v:"aes", salt:b64e(salt), iv:b64e(iv), data:b64e(ct)};
+  }
+  return {v:"xor", data: xorEnc(pw, json)};
+}
+async function openVault(pw, rec){
+  if(!rec) return [];
+  if(rec.v === "aes"){
+    if(!SUB) throw new Error("crypto non disponibile");
+    const key = await deriveKey(pw, b64d(rec.salt));
+    const pt = await SUB.decrypt({name:"AES-GCM", iv:b64d(rec.iv)}, key, b64d(rec.data));
+    return JSON.parse(DEC.decode(pt));
+  }
+  return JSON.parse(xorDec(pw, rec.data));
+}
+
+/* ─────────── stato ─────────── */
+let masterPw = "";
+let apps = [];
+let vault = [];
+
+const $  = id => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2200);
+}
+const readJSON = (k, fb) => { try{ return JSON.parse(localStorage.getItem(k)) ?? fb; }catch{ return fb; } };
+
+function loadApps(){
+  if(!localStorage.getItem(K_SEED)){
+    apps = SEED_APPS.map(a => ({...a, id:uid(), tags:[...(a.tags||[])]}));
+    localStorage.setItem(K_APPS, JSON.stringify(apps));
+    localStorage.setItem(K_SEED, "1");
+  } else {
+    apps = readJSON(K_APPS, []);
+  }
+}
+const saveApps = () => localStorage.setItem(K_APPS, JSON.stringify(apps));
+async function saveVault(){
+  localStorage.setItem(K_VAULT, JSON.stringify(await sealVault(masterPw, vault)));
+}
+
+/* ─────────── accesso ─────────── */
+async function checkPw(pw){
+  const auth = readJSON(K_AUTH, null);
+  if(auth && SUB) return await hashPw(pw, b64d(auth.salt)) === auth.hash;
+  if(auth && !SUB) return pw === auth.plain;
+  return pw === DEFAULT_PW;
+}
+async function storePw(pw){
+  if(SUB){
+    const salt = rand(16);
+    localStorage.setItem(K_AUTH, JSON.stringify({salt:b64e(salt), hash: await hashPw(pw, salt)}));
+  } else {
+    localStorage.setItem(K_AUTH, JSON.stringify({plain:pw}));
+  }
+}
+
+$("lockForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  await unlock($("lockPw").value);
+});
+
+async function unlock(pw){
+  const err = $("lockErr");
+  err.textContent = "";
+  if(!await checkPw(pw)){ err.textContent = "Password non valida."; return false; }
+  masterPw = pw;
+  try{
+    vault = await openVault(masterPw, readJSON(K_VAULT, null)) || [];
+  }catch{
+    err.textContent = "Password corretta ma l'archivio non si apre: usa la password con cui l'hai creato.";
+    return false;
+  }
+  sessionStorage.setItem(S_PW, pw);
+  loadApps();
+  $("lock").style.display = "none";
+  $("app").style.display = "";
+  renderApps(); renderVault(); renderCryptoNote();
+  return true;
+}
+
+$("btnLock").addEventListener("click", () => {
+  sessionStorage.removeItem(S_PW);
+  location.reload();
+});
+
+/* ─────────── viste ─────────── */
+document.querySelectorAll(".tab[data-view]").forEach(t => {
+  t.addEventListener("click", () => {
+    document.querySelectorAll(".tab[data-view]").forEach(x => x.classList.remove("on"));
+    t.classList.add("on");
+    const v = t.dataset.view;
+    $("viewHub").style.display   = v === "hub"   ? "" : "none";
+    $("viewVault").style.display = v === "vault" ? "" : "none";
+  });
+});
+
+/* ─────────── programmi ─────────── */
 function buildCard(app, i){
   const todo = !app.url || app.url === "#";
-  const a = document.createElement('a');
-  a.className = 'card' + (todo ? ' todo' : '');
-  a.href = todo ? 'javascript:void(0)' : app.url;
-  if(!todo){ a.target = '_blank'; a.rel = 'noopener'; }
-  a.style.animationDelay = (0.34 + i * 0.05) + 's';
+  const a = document.createElement("a");
+  a.className = "card" + (todo ? " todo" : "");
+  a.href = todo ? "javascript:void(0)" : app.url;
+  if(!todo){ a.target = "_blank"; a.rel = "noopener"; }
+  a.style.animationDelay = (0.06 + i * 0.04) + "s";
 
-  const tags = (app.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-  const lock = app.locked ? `<span class="tag lock">🔒 codice</span>` : '';
-  const warn = todo ? `<span class="tag warn">da impostare</span>` : '';
+  const tags = (app.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join("");
+  const lock = app.locked ? `<span class="tag lock">🔒 codice</span>` : "";
+  const warn = todo ? `<span class="tag warn">da impostare</span>` : "";
 
   a.innerHTML = `
+    <div class="card-actions">
+      <button class="mini edit" title="Modifica">✎</button>
+      <button class="mini del" title="Elimina">✕</button>
+    </div>
     <div class="card-top">
-      <div class="icon">${app.icon || "▦"}</div>
+      <div class="icon">${esc(app.icon) || "▦"}</div>
       <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M9 7h8v8"/></svg>
     </div>
-    <h3>${app.name}</h3>
-    <p>${app.desc || ""}</p>
+    <h3>${esc(app.name)}</h3>
+    <p>${esc(app.desc)}</p>
     <div class="tags">${tags}${lock}${warn}</div>`;
 
-  a.addEventListener('mousemove', e => {
+  a.querySelector(".edit").addEventListener("click", e => {
+    e.preventDefault(); e.stopPropagation(); openAppModal(app.id);
+  });
+  a.querySelector(".del").addEventListener("click", e => {
+    e.preventDefault(); e.stopPropagation();
+    if(confirm(`Eliminare "${app.name}" dall'hub?`)){
+      apps = apps.filter(x => x.id !== app.id);
+      saveApps(); renderApps(); toast("Programma eliminato");
+    }
+  });
+  a.addEventListener("mousemove", e => {
     const r = a.getBoundingClientRect();
-    a.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-    a.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    a.style.setProperty("--mx", (e.clientX - r.left) + "px");
+    a.style.setProperty("--my", (e.clientY - r.top) + "px");
   });
   return a;
 }
 
-function render(filter = ""){
+function renderApps(){
+  const board = $("board");
+  const q = $("search").value.trim().toLowerCase();
   board.innerHTML = "";
-  const q = filter.trim().toLowerCase();
-  const list = APPS.filter(app => {
-    const hay = (app.name + " " + (app.desc||"") + " " + (app.tags||[]).join(" ") + " " + (app.group||"")).toLowerCase();
+
+  const list = apps.filter(app => {
+    const hay = [app.name, app.desc, (app.tags||[]).join(" "), app.group].join(" ").toLowerCase();
     return hay.includes(q);
   });
+  $("count").textContent = list.length + (list.length === 1 ? " programma" : " programmi");
 
-  count.textContent = list.length + (list.length === 1 ? " programma" : " programmi");
-  empty.style.display = list.length ? "none" : "block";
-
-  // raggruppa per "group"
   const groups = {};
   list.forEach(app => { const g = app.group || "Generale"; (groups[g] = groups[g] || []).push(app); });
 
   let idx = 0;
   Object.keys(groups).forEach(g => {
-    const title = document.createElement('div');
-    title.className = 'group-title';
+    const title = document.createElement("div");
+    title.className = "group-title";
     title.textContent = g;
     board.appendChild(title);
-
-    const grid = document.createElement('div');
-    grid.className = 'grid';
+    const grid = document.createElement("div");
+    grid.className = "grid";
     groups[g].forEach(app => grid.appendChild(buildCard(app, idx++)));
     board.appendChild(grid);
   });
+
+  if(!list.length){
+    board.innerHTML = apps.length
+      ? `<div class="empty"><strong>Nessun programma trovato</strong>Prova con un'altra parola.</div>`
+      : `<div class="empty"><strong>L'hub è vuoto</strong>Aggiungi il primo programma per iniziare.</div>`;
+  }
+
+  // card "aggiungi" in fondo
+  const addWrap = document.createElement("div");
+  addWrap.className = "grid";
+  addWrap.style.marginTop = "16px";
+  const add = document.createElement("div");
+  add.className = "card add";
+  add.style.animationDelay = (0.06 + idx * 0.04) + "s";
+  add.innerHTML = `<div class="plus">+</div><div>Aggiungi un programma</div>`;
+  add.addEventListener("click", () => openAppModal());
+  addWrap.appendChild(add);
+  board.appendChild(addWrap);
+
+  const dl = $("groupList");
+  dl.innerHTML = [...new Set(apps.map(a => a.group).filter(Boolean))]
+    .map(g => `<option value="${esc(g)}">`).join("");
 }
 
-search.addEventListener('input', e => render(e.target.value));
+let editingApp = null;
+function openAppModal(id){
+  editingApp = id ? apps.find(a => a.id === id) : null;
+  $("appModalTitle").textContent = editingApp ? "Modifica programma" : "Nuovo programma";
+  $("fIcon").value  = editingApp?.icon  || "";
+  $("fName").value  = editingApp?.name  || "";
+  $("fDesc").value  = editingApp?.desc  || "";
+  $("fUrl").value   = (editingApp?.url && editingApp.url !== "#") ? editingApp.url : "";
+  $("fTags").value  = (editingApp?.tags || []).join(", ");
+  $("fGroup").value = editingApp?.group || "";
+  $("fLocked").checked = !!editingApp?.locked;
+  $("btnDelApp").style.display = editingApp ? "" : "none";
+  $("appModal").classList.add("on");
+  setTimeout(() => $("fName").focus(), 60);
+}
 
-// scorciatoia "/" per saltare alla ricerca
-document.addEventListener('keydown', e => {
-  if(e.key === '/' && document.activeElement !== search){ e.preventDefault(); search.focus(); }
-  if(e.key === 'Escape'){ search.value = ''; render(); search.blur(); }
+$("btnSaveApp").addEventListener("click", () => {
+  const name = $("fName").value.trim();
+  if(!name){ toast("Serve almeno il nome"); $("fName").focus(); return; }
+  let url = $("fUrl").value.trim();
+  if(url && !/^https?:\/\//i.test(url) && !url.startsWith("#")) url = "https://" + url;
+  const data = {
+    icon:  $("fIcon").value.trim(),
+    name,
+    desc:  $("fDesc").value.trim(),
+    url:   url || "#",
+    tags:  $("fTags").value.split(",").map(t => t.trim()).filter(Boolean),
+    group: $("fGroup").value.trim() || "Generale",
+    locked:$("fLocked").checked
+  };
+  if(editingApp) Object.assign(editingApp, data);
+  else apps.push({id:uid(), ...data});
+  saveApps(); renderApps(); closeModals();
+  toast(editingApp ? "Programma aggiornato" : "Programma aggiunto");
 });
 
-render();
+$("btnDelApp").addEventListener("click", () => {
+  if(editingApp && confirm(`Eliminare "${editingApp.name}"?`)){
+    apps = apps.filter(a => a.id !== editingApp.id);
+    saveApps(); renderApps(); closeModals(); toast("Programma eliminato");
+  }
+});
+
+/* ─────────── password ─────────── */
+function renderVault(){
+  const box = $("vaultList");
+  const q = $("vsearch").value.trim().toLowerCase();
+  const list = vault.filter(e =>
+    [e.site, e.user, e.url, e.note].join(" ").toLowerCase().includes(q));
+
+  $("vcount").textContent = list.length + (list.length === 1 ? " voce" : " voci");
+  box.innerHTML = "";
+
+  if(!list.length){
+    box.innerHTML = vault.length
+      ? `<div class="empty"><strong>Nessuna voce trovata</strong>Prova con un'altra parola.</div>`
+      : `<div class="empty"><strong>Archivio vuoto</strong>Aggiungi le credenziali dei tuoi siti: restano cifrate su questo browser.</div>`;
+    return;
+  }
+
+  list.forEach((e, i) => {
+    const row = document.createElement("div");
+    row.className = "vrow";
+    row.style.animationDelay = (i * 0.04) + "s";
+    const link = e.url ? `<a href="${esc(e.url)}" target="_blank" rel="noopener">apri ↗</a>` : "";
+    row.innerHTML = `
+      <div class="vmain">
+        <h4>${esc(e.site)} ${link}</h4>
+        ${e.user ? `<div class="vmeta">${esc(e.user)}</div>` : ""}
+        ${e.note ? `<div class="vnote">${esc(e.note)}</div>` : ""}
+      </div>
+      <div class="secret" data-secret>••••••••</div>
+      <div class="vactions">
+        <button class="btn sm" data-show>Mostra</button>
+        <button class="btn sm" data-copy>Copia</button>
+        <button class="btn sm" data-edit>Modifica</button>
+      </div>`;
+
+    const cell = row.querySelector("[data-secret]");
+    let shown = false;
+    row.querySelector("[data-show]").addEventListener("click", ev => {
+      shown = !shown;
+      cell.textContent = shown ? (e.pass || "—") : "••••••••";
+      ev.target.textContent = shown ? "Nascondi" : "Mostra";
+    });
+    row.querySelector("[data-copy]").addEventListener("click", async () => {
+      try{ await navigator.clipboard.writeText(e.pass || ""); toast("Password copiata"); }
+      catch{ toast("Copia non riuscita: mostra la password e selezionala"); }
+    });
+    row.querySelector("[data-edit]").addEventListener("click", () => openEntryModal(e.id));
+    box.appendChild(row);
+  });
+}
+
+let editingEntry = null;
+function openEntryModal(id){
+  editingEntry = id ? vault.find(e => e.id === id) : null;
+  $("entryModalTitle").textContent = editingEntry ? "Modifica password" : "Nuova password";
+  $("eSite").value = editingEntry?.site || "";
+  $("eUrl").value  = editingEntry?.url  || "";
+  $("eUser").value = editingEntry?.user || "";
+  $("ePass").value = editingEntry?.pass || "";
+  $("eNote").value = editingEntry?.note || "";
+  $("btnDelEntry").style.display = editingEntry ? "" : "none";
+  $("entryModal").classList.add("on");
+  setTimeout(() => $("eSite").focus(), 60);
+}
+
+$("btnSaveEntry").addEventListener("click", async () => {
+  const site = $("eSite").value.trim();
+  if(!site){ toast("Serve almeno il nome del sito"); $("eSite").focus(); return; }
+  let url = $("eUrl").value.trim();
+  if(url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+  const data = {
+    site, url,
+    user: $("eUser").value.trim(),
+    pass: $("ePass").value,
+    note: $("eNote").value.trim()
+  };
+  if(editingEntry) Object.assign(editingEntry, data);
+  else vault.push({id:uid(), ...data});
+  await saveVault(); renderVault(); closeModals();
+  toast(editingEntry ? "Voce aggiornata" : "Voce salvata");
+});
+
+$("btnDelEntry").addEventListener("click", async () => {
+  if(editingEntry && confirm(`Eliminare "${editingEntry.site}" dall'archivio?`)){
+    vault = vault.filter(e => e.id !== editingEntry.id);
+    await saveVault(); renderVault(); closeModals(); toast("Voce eliminata");
+  }
+});
+
+$("btnGen").addEventListener("click", () => {
+  const chars = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!?@#%*-_";
+  const bytes = rand(18);
+  $("ePass").value = [...bytes].map(b => chars[b % chars.length]).join("");
+});
+
+function renderCryptoNote(){
+  $("cryptoNote").innerHTML = SUB
+    ? "Le voci sono cifrate (AES-256) con la password d'accesso e restano solo su questo browser: se svuoti i dati del sito o cambi dispositivo, servono un backup e la stessa password. Tutto gira nel browser, quindi tieni fuori da qui le credenziali davvero critiche (banca, SPID)."
+    : "Attenzione: aperto così il browser non espone la cifratura forte, quindi le voci sono solo offuscate. Apri l'hub via <strong>https</strong> (GitHub Pages) per avere la cifratura AES-256.";
+}
+
+/* ─────────── impostazioni ─────────── */
+$("btnSettings").addEventListener("click", () => $("setModal").classList.add("on"));
+
+$("btnExport").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify({
+    format:"hub-backup-1",
+    date:new Date().toISOString(),
+    apps,
+    vault: readJSON(K_VAULT, null),
+    auth:  readJSON(K_AUTH, null)
+  }, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "hub-backup-" + new Date().toISOString().slice(0,10) + ".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("Backup scaricato");
+});
+
+$("btnImport").addEventListener("click", () => $("fileImport").click());
+$("fileImport").addEventListener("change", async ev => {
+  const file = ev.target.files[0];
+  if(!file) return;
+  try{
+    const data = JSON.parse(await file.text());
+    if(data.format !== "hub-backup-1") throw new Error("formato");
+    if(!confirm("Il backup sostituisce programmi e password attuali. Procedere?")) return;
+    localStorage.setItem(K_APPS, JSON.stringify(data.apps || []));
+    localStorage.setItem(K_SEED, "1");
+    if(data.vault) localStorage.setItem(K_VAULT, JSON.stringify(data.vault)); else localStorage.removeItem(K_VAULT);
+    if(data.auth)  localStorage.setItem(K_AUTH, JSON.stringify(data.auth));   else localStorage.removeItem(K_AUTH);
+    sessionStorage.removeItem(S_PW);
+    alert("Backup importato. Rientra con la password del backup.");
+    location.reload();
+  }catch{
+    toast("File non valido: serve un backup dell'hub");
+  }finally{ ev.target.value = ""; }
+});
+
+$("btnChangePw").addEventListener("click", async () => {
+  const oldPw = $("sOld").value, newPw = $("sNew").value;
+  if(!await checkPw(oldPw)){ toast("La password attuale non è corretta"); return; }
+  if(newPw.length < 4){ toast("La nuova password è troppo corta"); return; }
+  masterPw = newPw;
+  await storePw(newPw);
+  await saveVault();                    // riciframa l'archivio con la nuova chiave
+  sessionStorage.setItem(S_PW, newPw);
+  $("sOld").value = ""; $("sNew").value = "";
+  closeModals(); toast("Password aggiornata");
+});
+
+$("btnReset").addEventListener("click", () => {
+  if(!confirm("Ripristinare la lista iniziale dei programmi? Le tue aggiunte andranno perse (le password restano).")) return;
+  localStorage.removeItem(K_SEED);
+  localStorage.removeItem(K_APPS);
+  loadApps(); renderApps(); closeModals(); toast("Lista ripristinata");
+});
+
+/* ─────────── finestre e scorciatoie ─────────── */
+function closeModals(){ document.querySelectorAll(".modal").forEach(m => m.classList.remove("on")); }
+document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", closeModals));
+document.querySelectorAll(".modal").forEach(m => {
+  m.addEventListener("click", e => { if(e.target === m) closeModals(); });
+});
+
+$("btnAddApp").addEventListener("click", () => openAppModal());
+$("btnAddEntry").addEventListener("click", () => openEntryModal());
+$("search").addEventListener("input", renderApps);
+$("vsearch").addEventListener("input", renderVault);
+
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape"){ closeModals(); return; }
+  if($("app").style.display === "none") return;
+  const inField = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if(e.key === "/" && !inField){
+    e.preventDefault();
+    (($("viewVault").style.display === "none") ? $("search") : $("vsearch")).focus();
+  }
+});
+
+/* ─────────── avvio ─────────── */
+(async () => {
+  const saved = sessionStorage.getItem(S_PW);
+  if(saved && await unlock(saved)) return;
+  $("lockPw").focus();
+})();
 </script>
 </body>
 </html>

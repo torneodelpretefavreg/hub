@@ -20,6 +20,7 @@
     --accent:#e8a33d;
     --accent-soft:#e8a33d22;
     --danger:#d9705c;
+    --ok:#7fb069;
     --radius:18px;
   }
   *{margin:0;padding:0;box-sizing:border-box}
@@ -44,7 +45,7 @@
   }
   .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:64px 28px 96px}
 
-  /* ─────────── schermata di accesso ─────────── */
+  /* ─────────── accesso ─────────── */
   .lock{
     position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:28px;
     background:var(--bg);
@@ -58,7 +59,7 @@
   .lock h2{font-family:'Fraunces',serif;font-weight:500;font-size:1.9rem;letter-spacing:-.01em}
   .lock p{color:var(--muted-text);font-size:.94rem;margin-top:10px}
   .lock form{margin-top:26px;display:flex;flex-direction:column;gap:12px}
-  .lock-err{color:var(--danger);font-size:.86rem;min-height:1.1em}
+  .lock-err{color:var(--danger);font-size:.86rem;min-height:1.1em;line-height:1.4}
 
   input,textarea,select{
     width:100%;background:var(--bg-2);border:1px solid var(--line);
@@ -80,6 +81,7 @@
   }
   .btn:hover{border-color:#5a4e3c;background:var(--card-hover)}
   .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.5;cursor:default}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#20180a}
   .btn.primary:hover{background:#f0b258;border-color:#f0b258}
   .btn.ghost{background:transparent}
@@ -116,6 +118,12 @@
   .tab:hover{color:var(--text)}
   .tab.on{background:var(--card);border-color:var(--line);color:var(--text)}
   .tabs .spacer{flex:1}
+  .status{
+    font-size:.78rem;color:var(--muted-text);display:flex;align-items:center;gap:7px;
+    white-space:nowrap;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .dot.off{background:var(--danger)}
 
   .toolbar{
     margin:26px 0 6px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;
@@ -154,7 +162,7 @@
     font-size:1.5rem;background:var(--bg-2);border:1px solid var(--line);flex-shrink:0;
   }
   .arrow{opacity:.4;transition:transform .25s, opacity .25s;margin-top:4px}
-  .card:hover .arrow{opacity:1;transform:translate(3px,-3px)}
+  .card:hover .arrow{opacity:0}
   .card h3{font-size:1.18rem;font-weight:600;letter-spacing:-.01em}
   .card p{color:var(--muted-text);font-size:.92rem;line-height:1.5}
   .tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
@@ -168,7 +176,6 @@
   .tag.warn{color:#e8a33d;background:transparent;border:1px dashed #5a4e3c}
   .tag.lock{color:var(--muted-text);background:transparent;border:1px solid var(--line)}
 
-  /* azioni sulla card */
   .card-actions{
     position:absolute;top:14px;right:14px;display:flex;gap:6px;z-index:3;
     opacity:0;transition:opacity .2s;
@@ -181,9 +188,7 @@
   }
   .mini:hover{color:var(--text);border-color:#5a4e3c}
   .mini.del:hover{color:var(--danger);border-color:var(--danger)}
-  .card:hover .arrow{opacity:0}
 
-  /* card "aggiungi" */
   .card.add{
     align-items:center;justify-content:center;text-align:center;gap:8px;
     border-style:dashed;background:transparent;color:var(--muted-text);
@@ -209,7 +214,7 @@
   .secret{
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92rem;
     background:var(--bg-2);border:1px solid var(--line);border-radius:10px;
-    padding:8px 12px;letter-spacing:.04em;min-width:150px;
+    padding:8px 12px;letter-spacing:.04em;min-width:150px;word-break:break-all;
   }
   .vactions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 
@@ -250,7 +255,7 @@
     position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);
     background:var(--card);border:1px solid var(--line);border-radius:13px;
     padding:12px 20px;font-size:.9rem;z-index:70;opacity:0;pointer-events:none;
-    transition:opacity .25s, transform .25s;
+    transition:opacity .25s, transform .25s;max-width:90vw;text-align:center;
   }
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -271,7 +276,6 @@
     .grid{grid-template-columns:1fr}
     .field.row{flex-direction:column;gap:16px}
     .card-actions{opacity:1}
-    .card:hover .arrow{opacity:.4}
   }
 </style>
 </head>
@@ -286,7 +290,7 @@
     <form id="lockForm" autocomplete="off">
       <input id="lockPw" type="password" placeholder="Password" autocomplete="current-password">
       <div class="lock-err" id="lockErr"></div>
-      <button class="btn primary" type="submit">Entra</button>
+      <button class="btn primary" type="submit" id="lockBtn">Entra</button>
     </form>
   </div>
 </div>
@@ -303,11 +307,11 @@
     <button class="tab on" data-view="hub">Programmi</button>
     <button class="tab" data-view="vault">Password</button>
     <span class="spacer"></span>
+    <span class="status" id="status"><span class="dot" id="dot"></span><span id="statusText">sincronizzato</span></span>
     <button class="tab" id="btnSettings" title="Impostazioni">⚙︎</button>
     <button class="tab" id="btnLock" title="Blocca">Blocca</button>
   </nav>
 
-  <!-- vista programmi -->
   <section id="viewHub">
     <div class="toolbar">
       <div class="search">
@@ -320,7 +324,6 @@
     <div id="board"></div>
   </section>
 
-  <!-- vista password -->
   <section id="viewVault" style="display:none">
     <div class="toolbar">
       <div class="search">
@@ -335,7 +338,7 @@
   </section>
 
   <footer>
-    Hub personale · i dati restano su questo browser · <kbd>/</kbd> per cercare
+    Hub personale · dati sincronizzati su Firebase · <kbd>/</kbd> per cercare
   </footer>
 </div>
 
@@ -343,7 +346,7 @@
 <div class="modal" id="appModal">
   <div class="sheet">
     <h3 id="appModalTitle">Nuovo programma</h3>
-    <p class="hint">Compila i campi: la card compare subito nell'hub.</p>
+    <p class="hint">Compila i campi: la card compare subito nell'hub, su tutti i tuoi dispositivi.</p>
     <div class="field row">
       <div style="max-width:110px">
         <label>Icona</label>
@@ -386,7 +389,7 @@
 <div class="modal" id="entryModal">
   <div class="sheet">
     <h3 id="entryModalTitle">Nuova password</h3>
-    <p class="hint">Salvata cifrata in questo browser.</p>
+    <p class="hint">Cifrata prima di partire: sul database arriva illeggibile.</p>
     <div class="field">
       <label>Sito o servizio</label>
       <input id="eSite" placeholder="Gestionale Futsal">
@@ -436,8 +439,9 @@
     <div class="field">
       <label>Cambia password d'accesso</label>
       <input id="sOld" type="password" placeholder="Password attuale" autocomplete="off" style="margin-bottom:10px">
-      <input id="sNew" type="password" placeholder="Nuova password" autocomplete="off">
+      <input id="sNew" type="password" placeholder="Nuova password (almeno 6 caratteri)" autocomplete="off">
       <button class="btn" id="btnChangePw" style="margin-top:10px">Aggiorna password</button>
+      <p class="hint" style="margin:10px 0 0">Cambia sia l'accesso all'hub sia la chiave con cui è cifrato l'archivio.</p>
     </div>
 
     <div class="field">
@@ -453,11 +457,25 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 /* ════════════════════════════════════════════════════════════════════
-   LISTA INIZIALE — serve solo al primo avvio su un browser nuovo.
-   Da qui in poi programmi e password si gestiscono dall'interfaccia.
+   CONFIGURAZIONE
    ════════════════════════════════════════════════════════════════════ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAzucVCOGBzPKErG2Szm9bL_mFnA8ihXqs",
+  authDomain: "hubdavide-40287.firebaseapp.com",
+  databaseURL: "https://hubdavide-40287-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "hubdavide-40287",
+  storageBucket: "hubdavide-40287.firebasestorage.app",
+  messagingSenderId: "450862351417",
+  appId: "1:450862351417:web:0540962bbfd9c2869d79e8"
+};
+const AUTH_EMAIL = "futsalfabbrico@gmail.com";
+
+/* Lista di partenza: usata solo se il database è vuoto. */
 const SEED_APPS = [
   { icon:"⚽", name:"Sito Futsal Fabbrico",
     desc:"Sito ufficiale: squadra, stagione, risultati e Torneo del Prete.",
@@ -481,12 +499,9 @@ const SEED_APPS = [
     tags:["POS","Eventi"], group:"Torneo del Prete", locked:true },
 ];
 
-const DEFAULT_PW = "Futsal 2026";
-
-const K_APPS  = "hub_apps_v1";
-const K_VAULT = "hub_vault_v1";
-const K_AUTH  = "hub_auth_v1";
-const K_SEED  = "hub_seeded_v1";
+const K_APPS  = "hub_apps_v2";
+const K_VAULT = "hub_vault_v2";
+const K_AUTH  = "hub_auth_v2";
 const S_PW    = "hub_session_pw";
 
 /* ─────────── cifratura ─────────── */
@@ -494,7 +509,7 @@ const ENC = new TextEncoder(), DEC = new TextDecoder();
 const SUB = (window.crypto && window.crypto.subtle) ? window.crypto.subtle : null;
 const ITER = 150000;
 
-const b64e = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const b64e = buf => btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
 const b64d = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
 const rand = n => crypto.getRandomValues(new Uint8Array(n));
 
@@ -523,12 +538,12 @@ async function sealVault(pw, obj){
     const salt = rand(16), iv = rand(12);
     const key = await deriveKey(pw, salt);
     const ct = await SUB.encrypt({name:"AES-GCM", iv}, key, ENC.encode(json));
-    return {v:"aes", salt:b64e(salt), iv:b64e(iv), data:b64e(ct)};
+    return {v:"aes", salt:b64e(salt), iv:b64e(iv), data:b64e(ct), ts:Date.now()};
   }
-  return {v:"xor", data: xorEnc(pw, json)};
+  return {v:"xor", data: xorEnc(pw, json), ts:Date.now()};
 }
 async function openVault(pw, rec){
-  if(!rec) return [];
+  if(!rec || !rec.data) return [];
   if(rec.v === "aes"){
     if(!SUB) throw new Error("crypto non disponibile");
     const key = await deriveKey(pw, b64d(rec.salt));
@@ -542,81 +557,167 @@ async function openVault(pw, rec){
 let masterPw = "";
 let apps = [];
 let vault = [];
+let online = false;
+let db = null, ref = null;
+let appsSnapSeen = false;
 
 const $  = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c =>
   ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 function toast(msg){
   const t = $("toast"); t.textContent = msg; t.classList.add("on");
-  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2200);
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2600);
 }
-const readJSON = (k, fb) => { try{ return JSON.parse(localStorage.getItem(k)) ?? fb; }catch{ return fb; } };
+const readJSON = (k, fb) => { try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; }catch(e){ return fb; } };
 
-function loadApps(){
-  if(!localStorage.getItem(K_SEED)){
-    apps = SEED_APPS.map(a => ({...a, id:uid(), tags:[...(a.tags||[])]}));
-    localStorage.setItem(K_APPS, JSON.stringify(apps));
-    localStorage.setItem(K_SEED, "1");
-  } else {
-    apps = readJSON(K_APPS, []);
-  }
+function setStatus(ok, text){
+  online = ok;
+  $("dot").className = "dot" + (ok ? "" : " off");
+  $("statusText").textContent = text;
 }
-const saveApps = () => localStorage.setItem(K_APPS, JSON.stringify(apps));
-async function saveVault(){
-  localStorage.setItem(K_VAULT, JSON.stringify(await sealVault(masterPw, vault)));
-}
+
+/* ─────────── Firebase ─────────── */
+let fbReady = false;
+try{
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.database();
+  fbReady = true;
+}catch(e){ fbReady = false; }
 
 /* ─────────── accesso ─────────── */
-async function checkPw(pw){
-  const auth = readJSON(K_AUTH, null);
-  if(auth && SUB) return await hashPw(pw, b64d(auth.salt)) === auth.hash;
-  if(auth && !SUB) return pw === auth.plain;
-  return pw === DEFAULT_PW;
-}
-async function storePw(pw){
-  if(SUB){
-    const salt = rand(16);
-    localStorage.setItem(K_AUTH, JSON.stringify({salt:b64e(salt), hash: await hashPw(pw, salt)}));
-  } else {
-    localStorage.setItem(K_AUTH, JSON.stringify({plain:pw}));
-  }
-}
-
-$("lockForm").addEventListener("submit", async e => {
+$("lockForm").addEventListener("submit", function(e){
   e.preventDefault();
-  await unlock($("lockPw").value);
+  unlock($("lockPw").value);
 });
 
 async function unlock(pw){
-  const err = $("lockErr");
-  err.textContent = "";
-  if(!await checkPw(pw)){ err.textContent = "Password non valida."; return false; }
-  masterPw = pw;
-  try{
-    vault = await openVault(masterPw, readJSON(K_VAULT, null)) || [];
-  }catch{
-    err.textContent = "Password corretta ma l'archivio non si apre: usa la password con cui l'hai creato.";
-    return false;
+  const err = $("lockErr"), btn = $("lockBtn");
+  err.textContent = ""; btn.disabled = true; btn.textContent = "Accesso…";
+
+  let signedIn = false, offline = false;
+  if(fbReady){
+    try{
+      await firebase.auth().signInWithEmailAndPassword(AUTH_EMAIL, pw);
+      signedIn = true;
+    }catch(ex){
+      const code = ex && ex.code ? ex.code : "";
+      if(code === "auth/network-request-failed" || code === "auth/internal-error"){
+        offline = true;
+      }else{
+        btn.disabled = false; btn.textContent = "Entra";
+        err.textContent = "Password non valida.";
+        return false;
+      }
+    }
+  }else{
+    offline = true;
   }
+
+  if(offline){
+    // niente rete: verifico la password contro l'impronta salvata da un accesso precedente
+    const auth = readJSON(K_AUTH, null);
+    let ok = false;
+    if(auth && SUB){ try{ ok = (await hashPw(pw, b64d(auth.salt))) === auth.hash; }catch(e){ ok = false; } }
+    else if(auth){ ok = pw === auth.plain; }
+    if(!ok){
+      btn.disabled = false; btn.textContent = "Entra";
+      err.textContent = "Connessione assente e nessun accesso salvato su questo dispositivo. Riprova online.";
+      return false;
+    }
+  }
+
+  masterPw = pw;
   sessionStorage.setItem(S_PW, pw);
-  loadApps();
+  await rememberPw(pw);
+
+  // dati locali come primo riempimento (istantaneo, poi arriva il remoto)
+  apps = readJSON(K_APPS, []);
+  try{ vault = await openVault(masterPw, readJSON(K_VAULT, null)); }catch(e){ vault = []; }
+
   $("lock").style.display = "none";
   $("app").style.display = "";
   renderApps(); renderVault(); renderCryptoNote();
+
+  if(signedIn){ setStatus(true, "sincronizzato"); startSync(); }
+  else{ setStatus(false, "offline"); if(!apps.length){ apps = SEED_APPS.map(seed); renderApps(); } }
+
+  btn.disabled = false; btn.textContent = "Entra";
   return true;
 }
 
-$("btnLock").addEventListener("click", () => {
+function seed(a){ return Object.assign({}, a, {id:uid(), tags:(a.tags||[]).slice()}); }
+
+async function rememberPw(pw){
+  try{
+    if(SUB){
+      const salt = rand(16);
+      localStorage.setItem(K_AUTH, JSON.stringify({salt:b64e(salt), hash: await hashPw(pw, salt)}));
+    }else{
+      localStorage.setItem(K_AUTH, JSON.stringify({plain:pw}));
+    }
+  }catch(e){}
+}
+
+$("btnLock").addEventListener("click", function(){
   sessionStorage.removeItem(S_PW);
+  if(fbReady) firebase.auth().signOut();
   location.reload();
 });
 
+/* ─────────── sincronizzazione ─────────── */
+function startSync(){
+  ref = db.ref("hub");
+
+  ref.child("apps").on("value", async function(snap){
+    const v = snap.val();
+    if(v && v.list){
+      apps = v.list;
+      localStorage.setItem(K_APPS, JSON.stringify(apps));
+      renderApps();
+    }else if(!appsSnapSeen){
+      // database vuoto: parto dalla lista locale, o da quella iniziale
+      apps = apps.length ? apps : SEED_APPS.map(seed);
+      saveApps();
+      renderApps();
+    }
+    appsSnapSeen = true;
+  }, function(){ setStatus(false, "offline"); });
+
+  ref.child("vault").on("value", async function(snap){
+    const rec = snap.val();
+    if(!rec) return;
+    localStorage.setItem(K_VAULT, JSON.stringify(rec));
+    try{
+      vault = await openVault(masterPw, rec);
+      renderVault();
+    }catch(e){
+      toast("L'archivio è cifrato con un'altra password");
+    }
+  });
+
+  db.ref(".info/connected").on("value", function(s){
+    setStatus(!!s.val(), s.val() ? "sincronizzato" : "offline");
+  });
+}
+
+function saveApps(){
+  localStorage.setItem(K_APPS, JSON.stringify(apps));
+  if(online && ref) ref.child("apps").set({list:apps, ts:Date.now()})
+    .catch(function(){ toast("Salvato solo su questo dispositivo"); });
+}
+async function saveVault(){
+  const rec = await sealVault(masterPw, vault);
+  localStorage.setItem(K_VAULT, JSON.stringify(rec));
+  if(online && ref) ref.child("vault").set(rec)
+    .catch(function(){ toast("Salvato solo su questo dispositivo"); });
+}
+
 /* ─────────── viste ─────────── */
-document.querySelectorAll(".tab[data-view]").forEach(t => {
-  t.addEventListener("click", () => {
-    document.querySelectorAll(".tab[data-view]").forEach(x => x.classList.remove("on"));
+Array.prototype.forEach.call(document.querySelectorAll(".tab[data-view]"), function(t){
+  t.addEventListener("click", function(){
+    Array.prototype.forEach.call(document.querySelectorAll(".tab[data-view]"), function(x){ x.classList.remove("on"); });
     t.classList.add("on");
     const v = t.dataset.view;
     $("viewHub").style.display   = v === "hub"   ? "" : "none";
@@ -633,34 +734,34 @@ function buildCard(app, i){
   if(!todo){ a.target = "_blank"; a.rel = "noopener"; }
   a.style.animationDelay = (0.06 + i * 0.04) + "s";
 
-  const tags = (app.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join("");
-  const lock = app.locked ? `<span class="tag lock">🔒 codice</span>` : "";
-  const warn = todo ? `<span class="tag warn">da impostare</span>` : "";
+  const tags = (app.tags || []).map(function(t){ return '<span class="tag">' + esc(t) + '</span>'; }).join("");
+  const lock = app.locked ? '<span class="tag lock">🔒 codice</span>' : "";
+  const warn = todo ? '<span class="tag warn">da impostare</span>' : "";
 
-  a.innerHTML = `
-    <div class="card-actions">
-      <button class="mini edit" title="Modifica">✎</button>
-      <button class="mini del" title="Elimina">✕</button>
-    </div>
-    <div class="card-top">
-      <div class="icon">${esc(app.icon) || "▦"}</div>
-      <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M9 7h8v8"/></svg>
-    </div>
-    <h3>${esc(app.name)}</h3>
-    <p>${esc(app.desc)}</p>
-    <div class="tags">${tags}${lock}${warn}</div>`;
+  a.innerHTML =
+    '<div class="card-actions">' +
+      '<button class="mini edit" title="Modifica">✎</button>' +
+      '<button class="mini del" title="Elimina">✕</button>' +
+    '</div>' +
+    '<div class="card-top">' +
+      '<div class="icon">' + (esc(app.icon) || "▦") + '</div>' +
+      '<svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M9 7h8v8"/></svg>' +
+    '</div>' +
+    '<h3>' + esc(app.name) + '</h3>' +
+    '<p>' + esc(app.desc) + '</p>' +
+    '<div class="tags">' + tags + lock + warn + '</div>';
 
-  a.querySelector(".edit").addEventListener("click", e => {
+  a.querySelector(".edit").addEventListener("click", function(e){
     e.preventDefault(); e.stopPropagation(); openAppModal(app.id);
   });
-  a.querySelector(".del").addEventListener("click", e => {
+  a.querySelector(".del").addEventListener("click", function(e){
     e.preventDefault(); e.stopPropagation();
-    if(confirm(`Eliminare "${app.name}" dall'hub?`)){
-      apps = apps.filter(x => x.id !== app.id);
+    if(confirm('Eliminare "' + app.name + '" dall\'hub?')){
+      apps = apps.filter(function(x){ return x.id !== app.id; });
       saveApps(); renderApps(); toast("Programma eliminato");
     }
   });
-  a.addEventListener("mousemove", e => {
+  a.addEventListener("mousemove", function(e){
     const r = a.getBoundingClientRect();
     a.style.setProperty("--mx", (e.clientX - r.left) + "px");
     a.style.setProperty("--my", (e.clientY - r.top) + "px");
@@ -673,89 +774,94 @@ function renderApps(){
   const q = $("search").value.trim().toLowerCase();
   board.innerHTML = "";
 
-  const list = apps.filter(app => {
+  const list = apps.filter(function(app){
     const hay = [app.name, app.desc, (app.tags||[]).join(" "), app.group].join(" ").toLowerCase();
-    return hay.includes(q);
+    return hay.indexOf(q) !== -1;
   });
   $("count").textContent = list.length + (list.length === 1 ? " programma" : " programmi");
 
   const groups = {};
-  list.forEach(app => { const g = app.group || "Generale"; (groups[g] = groups[g] || []).push(app); });
+  list.forEach(function(app){
+    const g = app.group || "Generale";
+    (groups[g] = groups[g] || []).push(app);
+  });
 
   let idx = 0;
-  Object.keys(groups).forEach(g => {
+  Object.keys(groups).forEach(function(g){
     const title = document.createElement("div");
     title.className = "group-title";
     title.textContent = g;
     board.appendChild(title);
     const grid = document.createElement("div");
     grid.className = "grid";
-    groups[g].forEach(app => grid.appendChild(buildCard(app, idx++)));
+    groups[g].forEach(function(app){ grid.appendChild(buildCard(app, idx++)); });
     board.appendChild(grid);
   });
 
   if(!list.length){
     board.innerHTML = apps.length
-      ? `<div class="empty"><strong>Nessun programma trovato</strong>Prova con un'altra parola.</div>`
-      : `<div class="empty"><strong>L'hub è vuoto</strong>Aggiungi il primo programma per iniziare.</div>`;
+      ? '<div class="empty"><strong>Nessun programma trovato</strong>Prova con un\'altra parola.</div>'
+      : '<div class="empty"><strong>L\'hub è vuoto</strong>Aggiungi il primo programma per iniziare.</div>';
   }
 
-  // card "aggiungi" in fondo
   const addWrap = document.createElement("div");
   addWrap.className = "grid";
   addWrap.style.marginTop = "16px";
   const add = document.createElement("div");
   add.className = "card add";
   add.style.animationDelay = (0.06 + idx * 0.04) + "s";
-  add.innerHTML = `<div class="plus">+</div><div>Aggiungi un programma</div>`;
-  add.addEventListener("click", () => openAppModal());
+  add.innerHTML = '<div class="plus">+</div><div>Aggiungi un programma</div>';
+  add.addEventListener("click", function(){ openAppModal(); });
   addWrap.appendChild(add);
   board.appendChild(addWrap);
 
-  const dl = $("groupList");
-  dl.innerHTML = [...new Set(apps.map(a => a.group).filter(Boolean))]
-    .map(g => `<option value="${esc(g)}">`).join("");
+  const seen = {};
+  $("groupList").innerHTML = apps.map(function(a){ return a.group; })
+    .filter(function(g){ if(!g || seen[g]) return false; seen[g] = 1; return true; })
+    .map(function(g){ return '<option value="' + esc(g) + '">'; }).join("");
 }
 
 let editingApp = null;
 function openAppModal(id){
-  editingApp = id ? apps.find(a => a.id === id) : null;
+  editingApp = id ? apps.filter(function(a){ return a.id === id; })[0] : null;
   $("appModalTitle").textContent = editingApp ? "Modifica programma" : "Nuovo programma";
-  $("fIcon").value  = editingApp?.icon  || "";
-  $("fName").value  = editingApp?.name  || "";
-  $("fDesc").value  = editingApp?.desc  || "";
-  $("fUrl").value   = (editingApp?.url && editingApp.url !== "#") ? editingApp.url : "";
-  $("fTags").value  = (editingApp?.tags || []).join(", ");
-  $("fGroup").value = editingApp?.group || "";
-  $("fLocked").checked = !!editingApp?.locked;
+  $("fIcon").value  = editingApp ? (editingApp.icon || "") : "";
+  $("fName").value  = editingApp ? (editingApp.name || "") : "";
+  $("fDesc").value  = editingApp ? (editingApp.desc || "") : "";
+  $("fUrl").value   = (editingApp && editingApp.url && editingApp.url !== "#") ? editingApp.url : "";
+  $("fTags").value  = editingApp ? (editingApp.tags || []).join(", ") : "";
+  $("fGroup").value = editingApp ? (editingApp.group || "") : "";
+  $("fLocked").checked = editingApp ? !!editingApp.locked : false;
   $("btnDelApp").style.display = editingApp ? "" : "none";
   $("appModal").classList.add("on");
-  setTimeout(() => $("fName").focus(), 60);
+  setTimeout(function(){ $("fName").focus(); }, 60);
 }
 
-$("btnSaveApp").addEventListener("click", () => {
+$("btnSaveApp").addEventListener("click", function(){
   const name = $("fName").value.trim();
   if(!name){ toast("Serve almeno il nome"); $("fName").focus(); return; }
   let url = $("fUrl").value.trim();
-  if(url && !/^https?:\/\//i.test(url) && !url.startsWith("#")) url = "https://" + url;
+  if(url && !/^https?:\/\//i.test(url) && url.charAt(0) !== "#") url = "https://" + url;
   const data = {
     icon:  $("fIcon").value.trim(),
-    name,
+    name:  name,
     desc:  $("fDesc").value.trim(),
     url:   url || "#",
-    tags:  $("fTags").value.split(",").map(t => t.trim()).filter(Boolean),
+    tags:  $("fTags").value.split(",").map(function(t){ return t.trim(); }).filter(Boolean),
     group: $("fGroup").value.trim() || "Generale",
     locked:$("fLocked").checked
   };
+  const wasEdit = !!editingApp;
   if(editingApp) Object.assign(editingApp, data);
-  else apps.push({id:uid(), ...data});
+  else apps.push(Object.assign({id:uid()}, data));
   saveApps(); renderApps(); closeModals();
-  toast(editingApp ? "Programma aggiornato" : "Programma aggiunto");
+  toast(wasEdit ? "Programma aggiornato" : "Programma aggiunto");
 });
 
-$("btnDelApp").addEventListener("click", () => {
-  if(editingApp && confirm(`Eliminare "${editingApp.name}"?`)){
-    apps = apps.filter(a => a.id !== editingApp.id);
+$("btnDelApp").addEventListener("click", function(){
+  if(editingApp && confirm('Eliminare "' + editingApp.name + '"?')){
+    const id = editingApp.id;
+    apps = apps.filter(function(a){ return a.id !== id; });
     saveApps(); renderApps(); closeModals(); toast("Programma eliminato");
   }
 });
@@ -764,187 +870,213 @@ $("btnDelApp").addEventListener("click", () => {
 function renderVault(){
   const box = $("vaultList");
   const q = $("vsearch").value.trim().toLowerCase();
-  const list = vault.filter(e =>
-    [e.site, e.user, e.url, e.note].join(" ").toLowerCase().includes(q));
+  const list = vault.filter(function(e){
+    return [e.site, e.user, e.url, e.note].join(" ").toLowerCase().indexOf(q) !== -1;
+  });
 
   $("vcount").textContent = list.length + (list.length === 1 ? " voce" : " voci");
   box.innerHTML = "";
 
   if(!list.length){
     box.innerHTML = vault.length
-      ? `<div class="empty"><strong>Nessuna voce trovata</strong>Prova con un'altra parola.</div>`
-      : `<div class="empty"><strong>Archivio vuoto</strong>Aggiungi le credenziali dei tuoi siti: restano cifrate su questo browser.</div>`;
+      ? '<div class="empty"><strong>Nessuna voce trovata</strong>Prova con un\'altra parola.</div>'
+      : '<div class="empty"><strong>Archivio vuoto</strong>Aggiungi le credenziali dei tuoi siti: vengono cifrate prima di partire.</div>';
     return;
   }
 
-  list.forEach((e, i) => {
+  list.forEach(function(e, i){
     const row = document.createElement("div");
     row.className = "vrow";
     row.style.animationDelay = (i * 0.04) + "s";
-    const link = e.url ? `<a href="${esc(e.url)}" target="_blank" rel="noopener">apri ↗</a>` : "";
-    row.innerHTML = `
-      <div class="vmain">
-        <h4>${esc(e.site)} ${link}</h4>
-        ${e.user ? `<div class="vmeta">${esc(e.user)}</div>` : ""}
-        ${e.note ? `<div class="vnote">${esc(e.note)}</div>` : ""}
-      </div>
-      <div class="secret" data-secret>••••••••</div>
-      <div class="vactions">
-        <button class="btn sm" data-show>Mostra</button>
-        <button class="btn sm" data-copy>Copia</button>
-        <button class="btn sm" data-edit>Modifica</button>
-      </div>`;
+    const link = e.url ? '<a href="' + esc(e.url) + '" target="_blank" rel="noopener">apri ↗</a>' : "";
+    row.innerHTML =
+      '<div class="vmain">' +
+        '<h4>' + esc(e.site) + ' ' + link + '</h4>' +
+        (e.user ? '<div class="vmeta">' + esc(e.user) + '</div>' : "") +
+        (e.note ? '<div class="vnote">' + esc(e.note) + '</div>' : "") +
+      '</div>' +
+      '<div class="secret" data-secret>••••••••</div>' +
+      '<div class="vactions">' +
+        '<button class="btn sm" data-show>Mostra</button>' +
+        '<button class="btn sm" data-copy>Copia</button>' +
+        '<button class="btn sm" data-edit>Modifica</button>' +
+      '</div>';
 
     const cell = row.querySelector("[data-secret]");
     let shown = false;
-    row.querySelector("[data-show]").addEventListener("click", ev => {
+    row.querySelector("[data-show]").addEventListener("click", function(ev){
       shown = !shown;
       cell.textContent = shown ? (e.pass || "—") : "••••••••";
       ev.target.textContent = shown ? "Nascondi" : "Mostra";
     });
-    row.querySelector("[data-copy]").addEventListener("click", async () => {
-      try{ await navigator.clipboard.writeText(e.pass || ""); toast("Password copiata"); }
-      catch{ toast("Copia non riuscita: mostra la password e selezionala"); }
+    row.querySelector("[data-copy]").addEventListener("click", function(){
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(e.pass || "").then(
+          function(){ toast("Password copiata"); },
+          function(){ toast("Copia non riuscita: mostra la password e selezionala"); }
+        );
+      }else toast("Copia non disponibile: mostra la password e selezionala");
     });
-    row.querySelector("[data-edit]").addEventListener("click", () => openEntryModal(e.id));
+    row.querySelector("[data-edit]").addEventListener("click", function(){ openEntryModal(e.id); });
     box.appendChild(row);
   });
 }
 
 let editingEntry = null;
 function openEntryModal(id){
-  editingEntry = id ? vault.find(e => e.id === id) : null;
+  editingEntry = id ? vault.filter(function(e){ return e.id === id; })[0] : null;
   $("entryModalTitle").textContent = editingEntry ? "Modifica password" : "Nuova password";
-  $("eSite").value = editingEntry?.site || "";
-  $("eUrl").value  = editingEntry?.url  || "";
-  $("eUser").value = editingEntry?.user || "";
-  $("ePass").value = editingEntry?.pass || "";
-  $("eNote").value = editingEntry?.note || "";
+  $("eSite").value = editingEntry ? (editingEntry.site || "") : "";
+  $("eUrl").value  = editingEntry ? (editingEntry.url  || "") : "";
+  $("eUser").value = editingEntry ? (editingEntry.user || "") : "";
+  $("ePass").value = editingEntry ? (editingEntry.pass || "") : "";
+  $("eNote").value = editingEntry ? (editingEntry.note || "") : "";
   $("btnDelEntry").style.display = editingEntry ? "" : "none";
   $("entryModal").classList.add("on");
-  setTimeout(() => $("eSite").focus(), 60);
+  setTimeout(function(){ $("eSite").focus(); }, 60);
 }
 
-$("btnSaveEntry").addEventListener("click", async () => {
+$("btnSaveEntry").addEventListener("click", async function(){
   const site = $("eSite").value.trim();
   if(!site){ toast("Serve almeno il nome del sito"); $("eSite").focus(); return; }
   let url = $("eUrl").value.trim();
   if(url && !/^https?:\/\//i.test(url)) url = "https://" + url;
   const data = {
-    site, url,
+    site: site, url: url,
     user: $("eUser").value.trim(),
     pass: $("ePass").value,
     note: $("eNote").value.trim()
   };
+  const wasEdit = !!editingEntry;
   if(editingEntry) Object.assign(editingEntry, data);
-  else vault.push({id:uid(), ...data});
+  else vault.push(Object.assign({id:uid()}, data));
   await saveVault(); renderVault(); closeModals();
-  toast(editingEntry ? "Voce aggiornata" : "Voce salvata");
+  toast(wasEdit ? "Voce aggiornata" : "Voce salvata");
 });
 
-$("btnDelEntry").addEventListener("click", async () => {
-  if(editingEntry && confirm(`Eliminare "${editingEntry.site}" dall'archivio?`)){
-    vault = vault.filter(e => e.id !== editingEntry.id);
+$("btnDelEntry").addEventListener("click", async function(){
+  if(editingEntry && confirm('Eliminare "' + editingEntry.site + '" dall\'archivio?')){
+    const id = editingEntry.id;
+    vault = vault.filter(function(e){ return e.id !== id; });
     await saveVault(); renderVault(); closeModals(); toast("Voce eliminata");
   }
 });
 
-$("btnGen").addEventListener("click", () => {
+$("btnGen").addEventListener("click", function(){
   const chars = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!?@#%*-_";
   const bytes = rand(18);
-  $("ePass").value = [...bytes].map(b => chars[b % chars.length]).join("");
+  let out = "";
+  for(let i=0;i<bytes.length;i++) out += chars.charAt(bytes[i] % chars.length);
+  $("ePass").value = out;
 });
 
 function renderCryptoNote(){
   $("cryptoNote").innerHTML = SUB
-    ? "Le voci sono cifrate (AES-256) con la password d'accesso e restano solo su questo browser: se svuoti i dati del sito o cambi dispositivo, servono un backup e la stessa password. Tutto gira nel browser, quindi tieni fuori da qui le credenziali davvero critiche (banca, SPID)."
-    : "Attenzione: aperto così il browser non espone la cifratura forte, quindi le voci sono solo offuscate. Apri l'hub via <strong>https</strong> (GitHub Pages) per avere la cifratura AES-256.";
+    ? "Ogni voce è cifrata (AES-256) nel browser con la tua password prima di raggiungere il database: su Firebase arrivano stringhe illeggibili, e la password non lascia mai questo dispositivo. Anche così, tutto gira lato browser: le credenziali davvero critiche (banca, SPID) tienile fuori da qui."
+    : "Attenzione: aperto così il browser non espone la cifratura forte, quindi le voci sono solo offuscate. Apri l'hub via <strong>https</strong> per avere la cifratura AES-256.";
 }
 
 /* ─────────── impostazioni ─────────── */
-$("btnSettings").addEventListener("click", () => $("setModal").classList.add("on"));
+$("btnSettings").addEventListener("click", function(){ $("setModal").classList.add("on"); });
 
-$("btnExport").addEventListener("click", () => {
+$("btnExport").addEventListener("click", function(){
   const blob = new Blob([JSON.stringify({
-    format:"hub-backup-1",
+    format:"hub-backup-2",
     date:new Date().toISOString(),
-    apps,
-    vault: readJSON(K_VAULT, null),
-    auth:  readJSON(K_AUTH, null)
+    apps: apps,
+    vault: readJSON(K_VAULT, null)
   }, null, 2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "hub-backup-" + new Date().toISOString().slice(0,10) + ".json";
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
   toast("Backup scaricato");
 });
 
-$("btnImport").addEventListener("click", () => $("fileImport").click());
-$("fileImport").addEventListener("change", async ev => {
+$("btnImport").addEventListener("click", function(){ $("fileImport").click(); });
+$("fileImport").addEventListener("change", async function(ev){
   const file = ev.target.files[0];
   if(!file) return;
   try{
     const data = JSON.parse(await file.text());
-    if(data.format !== "hub-backup-1") throw new Error("formato");
-    if(!confirm("Il backup sostituisce programmi e password attuali. Procedere?")) return;
-    localStorage.setItem(K_APPS, JSON.stringify(data.apps || []));
-    localStorage.setItem(K_SEED, "1");
-    if(data.vault) localStorage.setItem(K_VAULT, JSON.stringify(data.vault)); else localStorage.removeItem(K_VAULT);
-    if(data.auth)  localStorage.setItem(K_AUTH, JSON.stringify(data.auth));   else localStorage.removeItem(K_AUTH);
-    sessionStorage.removeItem(S_PW);
-    alert("Backup importato. Rientra con la password del backup.");
-    location.reload();
-  }catch{
+    if(data.format !== "hub-backup-2" && data.format !== "hub-backup-1") throw new Error("formato");
+    if(!confirm("Il backup sostituisce programmi e password attuali, anche sugli altri dispositivi. Procedere?")) return;
+    apps = data.apps || [];
+    saveApps();
+    if(data.vault){
+      localStorage.setItem(K_VAULT, JSON.stringify(data.vault));
+      if(online && ref) await ref.child("vault").set(data.vault);
+      try{ vault = await openVault(masterPw, data.vault); }
+      catch(e){ toast("Archivio importato: è cifrato con un'altra password"); }
+    }
+    renderApps(); renderVault(); closeModals();
+    toast("Backup importato");
+  }catch(e){
     toast("File non valido: serve un backup dell'hub");
   }finally{ ev.target.value = ""; }
 });
 
-$("btnChangePw").addEventListener("click", async () => {
+$("btnChangePw").addEventListener("click", async function(){
   const oldPw = $("sOld").value, newPw = $("sNew").value;
-  if(!await checkPw(oldPw)){ toast("La password attuale non è corretta"); return; }
-  if(newPw.length < 4){ toast("La nuova password è troppo corta"); return; }
+  if(oldPw !== masterPw){ toast("La password attuale non è corretta"); return; }
+  if(newPw.length < 6){ toast("La nuova password deve avere almeno 6 caratteri"); return; }
+  if(!online){ toast("Serve la connessione per cambiare password"); return; }
+  try{
+    await firebase.auth().currentUser.updatePassword(newPw);
+  }catch(ex){
+    toast("Firebase ha rifiutato il cambio: rientra e riprova");
+    return;
+  }
   masterPw = newPw;
-  await storePw(newPw);
-  await saveVault();                    // riciframa l'archivio con la nuova chiave
   sessionStorage.setItem(S_PW, newPw);
+  await rememberPw(newPw);
+  await saveVault();               // ricifra l'archivio con la nuova chiave
   $("sOld").value = ""; $("sNew").value = "";
   closeModals(); toast("Password aggiornata");
 });
 
-$("btnReset").addEventListener("click", () => {
-  if(!confirm("Ripristinare la lista iniziale dei programmi? Le tue aggiunte andranno perse (le password restano).")) return;
-  localStorage.removeItem(K_SEED);
-  localStorage.removeItem(K_APPS);
-  loadApps(); renderApps(); closeModals(); toast("Lista ripristinata");
+$("btnReset").addEventListener("click", function(){
+  if(!confirm("Ripristinare la lista iniziale dei programmi? Le tue aggiunte andranno perse, anche sugli altri dispositivi. Le password restano.")) return;
+  apps = SEED_APPS.map(seed);
+  saveApps(); renderApps(); closeModals(); toast("Lista ripristinata");
 });
 
 /* ─────────── finestre e scorciatoie ─────────── */
-function closeModals(){ document.querySelectorAll(".modal").forEach(m => m.classList.remove("on")); }
-document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", closeModals));
-document.querySelectorAll(".modal").forEach(m => {
-  m.addEventListener("click", e => { if(e.target === m) closeModals(); });
+function closeModals(){
+  Array.prototype.forEach.call(document.querySelectorAll(".modal"), function(m){ m.classList.remove("on"); });
+}
+Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function(b){
+  b.addEventListener("click", closeModals);
+});
+Array.prototype.forEach.call(document.querySelectorAll(".modal"), function(m){
+  m.addEventListener("click", function(e){ if(e.target === m) closeModals(); });
 });
 
-$("btnAddApp").addEventListener("click", () => openAppModal());
-$("btnAddEntry").addEventListener("click", () => openEntryModal());
+$("btnAddApp").addEventListener("click", function(){ openAppModal(); });
+$("btnAddEntry").addEventListener("click", function(){ openEntryModal(); });
 $("search").addEventListener("input", renderApps);
 $("vsearch").addEventListener("input", renderVault);
 
-document.addEventListener("keydown", e => {
+document.addEventListener("keydown", function(e){
   if(e.key === "Escape"){ closeModals(); return; }
   if($("app").style.display === "none") return;
   const inField = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
   if(e.key === "/" && !inField){
     e.preventDefault();
-    (($("viewVault").style.display === "none") ? $("search") : $("vsearch")).focus();
+    ($("viewVault").style.display === "none" ? $("search") : $("vsearch")).focus();
   }
 });
 
 /* ─────────── avvio ─────────── */
-(async () => {
+(async function(){
   const saved = sessionStorage.getItem(S_PW);
-  if(saved && await unlock(saved)) return;
+  if(saved){
+    const ok = await unlock(saved);
+    if(ok) return;
+    sessionStorage.removeItem(S_PW);
+    $("lockErr").textContent = "";
+  }
   $("lockPw").focus();
 })();
 </script>

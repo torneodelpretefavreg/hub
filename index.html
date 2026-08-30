@@ -674,7 +674,8 @@ async function unlock(pw){
   await rememberPw(pw);
 
   // dati locali come primo riempimento (istantaneo, poi arriva il remoto)
-  apps = readJSON(K_APPS, []);
+  const localApps = readJSON(K_APPS, null);
+  apps = localApps ? (localApps.list || (Array.isArray(localApps) ? localApps : [])) : [];
   try{ vault = await openVault(masterPw, readJSON(K_VAULT, null)); }catch(e){ vault = []; }
 
   $("lock").style.display = "none";
@@ -713,12 +714,19 @@ function startSync(){
 
   ref.child("apps").on("value", async function(snap){
     const v = snap.val();
+    const localRec = readJSON(K_APPS, null);
+
     if(v && v.list){
+      // se qui ho modifiche più recenti, le ripubblico invece di perderle
+      if(localRec && localRec.ts && v.ts && localRec.ts > v.ts && localRec.list){
+        ref.child("apps").set(localRec).catch(function(){});
+        appsSnapSeen = true;
+        return;
+      }
       apps = v.list;
-      localStorage.setItem(K_APPS, JSON.stringify(apps));
+      localStorage.setItem(K_APPS, JSON.stringify({list:apps, ts:v.ts || Date.now()}));
       renderApps();
     }else if(!appsSnapSeen){
-      // database vuoto: parto dalla lista locale, o da quella iniziale
       apps = apps.length ? apps : SEED_APPS.map(seed);
       saveApps();
       renderApps();
@@ -728,7 +736,19 @@ function startSync(){
 
   ref.child("vault").on("value", async function(snap){
     const rec = snap.val();
-    if(!rec) return;
+    const localRec = readJSON(K_VAULT, null);
+
+    // il database è vuoto ma qui ho delle voci: le carico invece di svuotare
+    if(!rec){
+      if(localRec) ref.child("vault").set(localRec).catch(function(){});
+      return;
+    }
+    // copia locale più recente (modifiche fatte senza rete): vince la mia
+    if(localRec && localRec.ts && rec.ts && localRec.ts > rec.ts){
+      ref.child("vault").set(localRec).catch(function(){});
+      return;
+    }
+
     localStorage.setItem(K_VAULT, JSON.stringify(rec));
     try{
       vault = await openVault(masterPw, rec);
@@ -736,6 +756,8 @@ function startSync(){
     }catch(e){
       toast("L'archivio è cifrato con un'altra password");
     }
+  }, function(err){
+    toast("Archivio non leggibile dal database: " + (err && err.message ? err.message : "errore"));
   });
 
   db.ref(".info/connected").on("value", function(s){
@@ -744,15 +766,24 @@ function startSync(){
 }
 
 function saveApps(){
-  localStorage.setItem(K_APPS, JSON.stringify(apps));
-  if(online && ref) ref.child("apps").set({list:apps, ts:Date.now()})
-    .catch(function(){ toast("Salvato solo su questo dispositivo"); });
+  const rec = {list:apps, ts:Date.now()};
+  localStorage.setItem(K_APPS, JSON.stringify(rec));
+  // niente guardia su "online": l'SDK accoda la scrittura e la invia alla riconnessione
+  if(ref) ref.child("apps").set(rec).catch(function(err){
+    toast("Programmi non salvati sul database: " + (err && err.message ? err.message : "errore"));
+  });
 }
 async function saveVault(){
+  if(!masterPw){ toast("Sessione scaduta: rientra con la password"); return; }
   const rec = await sealVault(masterPw, vault);
   localStorage.setItem(K_VAULT, JSON.stringify(rec));
-  if(online && ref) ref.child("vault").set(rec)
-    .catch(function(){ toast("Salvato solo su questo dispositivo"); });
+  if(ref){
+    try{
+      await ref.child("vault").set(rec);
+    }catch(err){
+      toast("Password non salvata sul database: " + (err && err.message ? err.message : "errore"));
+    }
+  }
 }
 
 /* ─────────── viste ─────────── */
@@ -1048,6 +1079,7 @@ $("eApp").addEventListener("change", function(){
 });
 
 $("btnSaveEntry").addEventListener("click", async function(){
+ try{
   const linked = appById($("eApp").value);
   const site = $("eSite").value.trim() || (linked ? linked.name : "");
   if(!site){ toast("Scegli un programma o scrivi il nome del sito"); $("eSite").focus(); return; }
@@ -1066,6 +1098,9 @@ $("btnSaveEntry").addEventListener("click", async function(){
   else vault.push(Object.assign({id:uid()}, data));
   await saveVault(); renderVault(); closeModals();
   toast(wasEdit ? "Voce aggiornata" : "Voce salvata");
+ }catch(err){
+  toast("Salvataggio non riuscito: " + (err && err.message ? err.message : "errore"));
+ }
 });
 
 $("btnDelEntry").addEventListener("click", async function(){
@@ -1120,7 +1155,7 @@ $("fileImport").addEventListener("change", async function(ev){
     saveApps();
     if(data.vault){
       localStorage.setItem(K_VAULT, JSON.stringify(data.vault));
-      if(online && ref) await ref.child("vault").set(data.vault);
+      if(ref) await ref.child("vault").set(data.vault);
       try{ vault = await openVault(masterPw, data.vault); }
       catch(e){ toast("Archivio importato: è cifrato con un'altra password"); }
     }

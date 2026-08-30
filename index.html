@@ -143,12 +143,15 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 
   .card{
-    position:relative;display:flex;flex-direction:column;gap:12px;
+    position:relative;display:flex;flex-direction:column;gap:10px;
     background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    padding:22px;text-decoration:none;color:inherit;overflow:hidden;
+    padding:22px;color:inherit;overflow:hidden;min-height:200px;
     transition:transform .25s cubic-bezier(.2,.8,.2,1), border-color .25s, background .25s;
     opacity:0;transform:translateY(14px);animation:rise .6s forwards;
   }
+  /* il link copre tutta la card: i pulsanti stanno sopra, fuori dall'anchor */
+  .card-hit{position:absolute;inset:0;z-index:2;border-radius:var(--radius);text-decoration:none}
+  .card.todo .card-hit{cursor:default}
   .card::after{
     content:"";position:absolute;inset:0;border-radius:var(--radius);
     background:radial-gradient(420px circle at var(--mx,50%) var(--my,0%), var(--accent-soft), transparent 60%);
@@ -163,9 +166,15 @@
   }
   .arrow{opacity:.4;transition:transform .25s, opacity .25s;margin-top:4px}
   .card:hover .arrow{opacity:0}
-  .card h3{font-size:1.18rem;font-weight:600;letter-spacing:-.01em}
-  .card p{color:var(--muted-text);font-size:.92rem;line-height:1.5}
-  .tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+  .card h3{
+    font-size:1.14rem;font-weight:600;letter-spacing:-.01em;line-height:1.28;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .card p{
+    color:var(--muted-text);font-size:.91rem;line-height:1.5;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:14px;position:relative;z-index:3;pointer-events:none}
   .tag{
     font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;font-weight:600;
     color:var(--accent);background:var(--accent-soft);padding:4px 9px;border-radius:7px;
@@ -209,6 +218,11 @@
   .vmain{flex:1;min-width:200px}
   .vmain h4{font-size:1.05rem;font-weight:600;display:flex;align-items:center;gap:8px}
   .vmain h4 a{color:var(--accent);text-decoration:none;font-size:.8rem;font-weight:600}
+  .vlink{
+    display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+    font-size:.74rem;letter-spacing:.04em;text-transform:uppercase;font-weight:600;
+    color:var(--accent);background:var(--accent-soft);padding:4px 10px;border-radius:7px;
+  }
   .vmeta{color:var(--muted-text);font-size:.88rem;margin-top:5px;word-break:break-all}
   .vnote{color:var(--muted-text);font-size:.84rem;margin-top:8px;line-height:1.5;white-space:pre-wrap}
   .secret{
@@ -250,6 +264,19 @@
   .sheet-actions .left{margin-right:auto}
   .with-btn{display:flex;gap:8px}
   .with-btn input{flex:1}
+
+  .emoji-grid{
+    display:flex;flex-wrap:wrap;gap:6px;
+    border:1px solid var(--line);border-radius:13px;padding:10px;background:var(--bg-2);
+  }
+  .emoji-grid button{
+    width:36px;height:36px;font-size:1.15rem;line-height:1;cursor:pointer;
+    background:transparent;border:1px solid transparent;border-radius:9px;
+    transition:background .15s, border-color .15s, transform .15s;
+  }
+  .emoji-grid button:hover{background:var(--card-hover);border-color:var(--line)}
+  .emoji-grid button.on{border-color:var(--accent);background:var(--accent-soft)}
+  .emoji-grid button:active{transform:scale(.9)}
 
   .toast{
     position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);
@@ -350,12 +377,15 @@
     <div class="field row">
       <div style="max-width:110px">
         <label>Icona</label>
-        <input id="fIcon" maxlength="4" placeholder="🚀">
+        <input id="fIcon" placeholder="🚀" autocomplete="off">
       </div>
       <div>
         <label>Nome</label>
         <input id="fName" placeholder="Nome del programma">
       </div>
+    </div>
+    <div class="field">
+      <div class="emoji-grid" id="emojiGrid"></div>
     </div>
     <div class="field">
       <label>Descrizione</label>
@@ -390,6 +420,10 @@
   <div class="sheet">
     <h3 id="entryModalTitle">Nuova password</h3>
     <p class="hint">Cifrata prima di partire: sul database arriva illeggibile.</p>
+    <div class="field">
+      <label>Programma dell'hub</label>
+      <select id="eApp"></select>
+    </div>
     <div class="field">
       <label>Sito o servizio</label>
       <input id="eSite" placeholder="Gestionale Futsal">
@@ -728,45 +762,48 @@ Array.prototype.forEach.call(document.querySelectorAll(".tab[data-view]"), funct
 /* ─────────── programmi ─────────── */
 function buildCard(app, i){
   const todo = !app.url || app.url === "#";
-  const a = document.createElement("a");
-  a.className = "card" + (todo ? " todo" : "");
-  a.href = todo ? "javascript:void(0)" : app.url;
-  if(!todo){ a.target = "_blank"; a.rel = "noopener"; }
-  a.style.animationDelay = (0.06 + i * 0.04) + "s";
+  const el = document.createElement("div");
+  el.className = "card" + (todo ? " todo" : "");
+  el.style.animationDelay = (0.06 + i * 0.04) + "s";
 
   const tags = (app.tags || []).map(function(t){ return '<span class="tag">' + esc(t) + '</span>'; }).join("");
   const lock = app.locked ? '<span class="tag lock">🔒 codice</span>' : "";
   const warn = todo ? '<span class="tag warn">da impostare</span>' : "";
 
-  a.innerHTML =
+  const hit = todo
+    ? '<span class="card-hit"></span>'
+    : '<a class="card-hit" href="' + esc(app.url) + '" target="_blank" rel="noopener" aria-label="' + esc(app.name) + '"></a>';
+
+  el.innerHTML =
+    hit +
     '<div class="card-actions">' +
-      '<button class="mini edit" title="Modifica">✎</button>' +
-      '<button class="mini del" title="Elimina">✕</button>' +
+      '<button class="mini edit" type="button" title="Modifica">✎</button>' +
+      '<button class="mini del" type="button" title="Elimina">✕</button>' +
     '</div>' +
     '<div class="card-top">' +
       '<div class="icon">' + (esc(app.icon) || "▦") + '</div>' +
       '<svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M9 7h8v8"/></svg>' +
     '</div>' +
     '<h3>' + esc(app.name) + '</h3>' +
-    '<p>' + esc(app.desc) + '</p>' +
+    (app.desc ? '<p>' + esc(app.desc) + '</p>' : "") +
     '<div class="tags">' + tags + lock + warn + '</div>';
 
-  a.querySelector(".edit").addEventListener("click", function(e){
+  el.querySelector(".edit").addEventListener("click", function(e){
     e.preventDefault(); e.stopPropagation(); openAppModal(app.id);
   });
-  a.querySelector(".del").addEventListener("click", function(e){
+  el.querySelector(".del").addEventListener("click", function(e){
     e.preventDefault(); e.stopPropagation();
     if(confirm('Eliminare "' + app.name + '" dall\'hub?')){
       apps = apps.filter(function(x){ return x.id !== app.id; });
       saveApps(); renderApps(); toast("Programma eliminato");
     }
   });
-  a.addEventListener("mousemove", function(e){
-    const r = a.getBoundingClientRect();
-    a.style.setProperty("--mx", (e.clientX - r.left) + "px");
-    a.style.setProperty("--my", (e.clientY - r.top) + "px");
+  el.addEventListener("mousemove", function(e){
+    const r = el.getBoundingClientRect();
+    el.style.setProperty("--mx", (e.clientX - r.left) + "px");
+    el.style.setProperty("--my", (e.clientY - r.top) + "px");
   });
-  return a;
+  return el;
 }
 
 function renderApps(){
@@ -821,6 +858,29 @@ function renderApps(){
     .map(function(g){ return '<option value="' + esc(g) + '">'; }).join("");
 }
 
+const EMOJI = ["⚽","🏆","👥","📒","🗂️","💶","💰","📊","📈","🧾","📅","🗓️","⏱️","📝","✅","🔧","⚙️","🛠️","🍽️","🍕","🎪","🎟️","🎨","📸","🎧","🏋️","🥇","📍","🚀","🌐","💡","🔒","📦","🧠","📮","🏠"];
+
+function buildEmojiGrid(){
+  const g = $("emojiGrid");
+  g.innerHTML = EMOJI.map(function(e){
+    return '<button type="button" data-emoji="' + e + '">' + e + '</button>';
+  }).join("");
+  Array.prototype.forEach.call(g.querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(){
+      $("fIcon").value = b.dataset.emoji;
+      markEmoji();
+    });
+  });
+}
+function markEmoji(){
+  const cur = $("fIcon").value.trim();
+  Array.prototype.forEach.call($("emojiGrid").querySelectorAll("button"), function(b){
+    b.classList.toggle("on", b.dataset.emoji === cur);
+  });
+}
+buildEmojiGrid();
+$("fIcon").addEventListener("input", markEmoji);
+
 let editingApp = null;
 function openAppModal(id){
   editingApp = id ? apps.filter(function(a){ return a.id === id; })[0] : null;
@@ -832,6 +892,7 @@ function openAppModal(id){
   $("fTags").value  = editingApp ? (editingApp.tags || []).join(", ") : "";
   $("fGroup").value = editingApp ? (editingApp.group || "") : "";
   $("fLocked").checked = editingApp ? !!editingApp.locked : false;
+  markEmoji();
   $("btnDelApp").style.display = editingApp ? "" : "none";
   $("appModal").classList.add("on");
   setTimeout(function(){ $("fName").focus(); }, 60);
@@ -871,7 +932,9 @@ function renderVault(){
   const box = $("vaultList");
   const q = $("vsearch").value.trim().toLowerCase();
   const list = vault.filter(function(e){
-    return [e.site, e.user, e.url, e.note].join(" ").toLowerCase().indexOf(q) !== -1;
+    const a = appById(e.appId);
+    const hay = [e.site, e.user, e.url, e.note, a ? a.name : "", a ? a.group : ""].join(" ");
+    return hay.toLowerCase().indexOf(q) !== -1;
   });
 
   $("vcount").textContent = list.length + (list.length === 1 ? " voce" : " voci");
@@ -888,10 +951,16 @@ function renderVault(){
     const row = document.createElement("div");
     row.className = "vrow";
     row.style.animationDelay = (i * 0.04) + "s";
-    const link = e.url ? '<a href="' + esc(e.url) + '" target="_blank" rel="noopener">apri ↗</a>' : "";
+    const linked = appById(e.appId);
+    const url = e.url || (linked && linked.url !== "#" ? linked.url : "");
+    const link = url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">apri ↗</a>' : "";
+    const badge = linked
+      ? '<div class="vlink">' + (esc(linked.icon) || "▦") + ' ' + esc(linked.name) + '</div>'
+      : "";
     row.innerHTML =
       '<div class="vmain">' +
         '<h4>' + esc(e.site) + ' ' + link + '</h4>' +
+        badge +
         (e.user ? '<div class="vmeta">' + esc(e.user) + '</div>' : "") +
         (e.note ? '<div class="vnote">' + esc(e.note) + '</div>' : "") +
       '</div>' +
@@ -922,10 +991,34 @@ function renderVault(){
   });
 }
 
+function appById(id){
+  return id ? apps.filter(function(a){ return a.id === id; })[0] : null;
+}
+
+function fillAppSelect(selected){
+  const sel = $("eApp");
+  const groups = {};
+  apps.forEach(function(a){
+    const g = a.group || "Generale";
+    (groups[g] = groups[g] || []).push(a);
+  });
+  let html = '<option value="">— nessuno (sito esterno)</option>';
+  Object.keys(groups).forEach(function(g){
+    html += '<optgroup label="' + esc(g) + '">';
+    groups[g].forEach(function(a){
+      html += '<option value="' + esc(a.id) + '">' + esc(a.name) + '</option>';
+    });
+    html += '</optgroup>';
+  });
+  sel.innerHTML = html;
+  sel.value = selected || "";
+}
+
 let editingEntry = null;
 function openEntryModal(id){
   editingEntry = id ? vault.filter(function(e){ return e.id === id; })[0] : null;
   $("entryModalTitle").textContent = editingEntry ? "Modifica password" : "Nuova password";
+  fillAppSelect(editingEntry ? editingEntry.appId : "");
   $("eSite").value = editingEntry ? (editingEntry.site || "") : "";
   $("eUrl").value  = editingEntry ? (editingEntry.url  || "") : "";
   $("eUser").value = editingEntry ? (editingEntry.user || "") : "";
@@ -936,12 +1029,22 @@ function openEntryModal(id){
   setTimeout(function(){ $("eSite").focus(); }, 60);
 }
 
+$("eApp").addEventListener("change", function(){
+  const a = appById($("eApp").value);
+  if(!a) return;
+  if(!$("eSite").value.trim()) $("eSite").value = a.name;
+  if(!$("eUrl").value.trim() && a.url && a.url !== "#") $("eUrl").value = a.url;
+});
+
 $("btnSaveEntry").addEventListener("click", async function(){
-  const site = $("eSite").value.trim();
-  if(!site){ toast("Serve almeno il nome del sito"); $("eSite").focus(); return; }
+  const linked = appById($("eApp").value);
+  const site = $("eSite").value.trim() || (linked ? linked.name : "");
+  if(!site){ toast("Scegli un programma o scrivi il nome del sito"); $("eSite").focus(); return; }
   let url = $("eUrl").value.trim();
+  if(!url && linked && linked.url && linked.url !== "#") url = linked.url;
   if(url && !/^https?:\/\//i.test(url)) url = "https://" + url;
   const data = {
+    appId: $("eApp").value || "",
     site: site, url: url,
     user: $("eUser").value.trim(),
     pass: $("ePass").value,

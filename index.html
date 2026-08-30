@@ -69,6 +69,15 @@
   }
   input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
   input::placeholder,textarea::placeholder{color:var(--muted-text)}
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus{
+    -webkit-text-fill-color:var(--text);
+    -webkit-box-shadow:0 0 0 1000px var(--bg-2) inset;
+    caret-color:var(--text);
+    transition:background-color 9999s ease-in-out 0s;
+  }
+  input[type=search]::-webkit-search-cancel-button{cursor:pointer}
   textarea{resize:vertical;min-height:74px;line-height:1.5}
   label{display:block;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;
         color:var(--muted-text);font-weight:600;margin-bottom:7px}
@@ -350,7 +359,9 @@
     <div class="toolbar">
       <div class="search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="search" type="text" placeholder="Cerca un programma…  (premi  /  )" autocomplete="off">
+        <input id="search" type="search" name="hub-filtro-programmi" placeholder="Cerca un programma…  (premi  /  )"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               data-lpignore="true" data-1p-ignore data-form-type="other">
       </div>
       <div class="count" id="count"></div>
       <button class="btn primary" id="btnAddApp">+ Aggiungi programma</button>
@@ -362,7 +373,9 @@
     <div class="toolbar">
       <div class="search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="vsearch" type="text" placeholder="Cerca un sito, un utente…" autocomplete="off">
+        <input id="vsearch" type="search" name="hub-filtro-archivio" placeholder="Cerca un sito, un utente…"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               data-lpignore="true" data-1p-ignore data-form-type="other">
       </div>
       <div class="count" id="vcount"></div>
       <button class="btn primary" id="btnAddEntry">+ Aggiungi password</button>
@@ -441,12 +454,14 @@
     </div>
     <div class="field">
       <label>Utente</label>
-      <input id="eUser" placeholder="email o nome utente">
+      <input id="eUser" placeholder="email o nome utente" autocomplete="off"
+             name="hub-voce-utente" data-lpignore="true" data-1p-ignore data-form-type="other">
     </div>
     <div class="field">
       <label>Password</label>
       <div class="with-btn">
-        <input id="ePass" type="text" placeholder="password o codice">
+        <input id="ePass" type="text" placeholder="password o codice" autocomplete="off"
+               name="hub-voce-codice" data-lpignore="true" data-1p-ignore data-form-type="other">
         <button class="btn" id="btnGen" title="Genera">Genera</button>
       </div>
     </div>
@@ -686,7 +701,15 @@ async function unlock(pw){
 
   $("lock").style.display = "none";
   $("app").style.display = "";
+  $("search").value = ""; $("vsearch").value = "";
   renderApps(); renderVault(); renderCryptoNote();
+  // Chrome può riempire le caselle di ricerca subito dopo il caricamento: le riazzero
+  setTimeout(function(){
+    if($("search").value || $("vsearch").value){
+      $("search").value = ""; $("vsearch").value = "";
+      renderApps(); renderVault();
+    }
+  }, 700);
 
   if(signedIn){ setStatus(true, "sincronizzato"); startSync(); }
   else{ setStatus(false, "offline"); if(!apps.length){ apps = SEED_APPS.map(seed); renderApps(); } }
@@ -800,6 +823,8 @@ Array.prototype.forEach.call(document.querySelectorAll(".tab[data-view]"), funct
     Array.prototype.forEach.call(document.querySelectorAll(".tab[data-view]"), function(x){ x.classList.remove("on"); });
     t.classList.add("on");
     const v = t.dataset.view;
+    if(v === "vault"){ $("vsearch").value = ""; renderVault(); }
+    if(v === "hub"){ $("search").value = ""; renderApps(); }
     $("viewHub").style.display   = v === "hub"   ? "" : "none";
     $("viewVault").style.display = v === "vault" ? "" : "none";
   });
@@ -991,9 +1016,16 @@ function renderVault(){
   box.innerHTML = "";
 
   if(!list.length){
-    box.innerHTML = vault.length
-      ? '<div class="empty"><strong>Nessuna voce trovata</strong>Prova con un\'altra parola.</div>'
-      : '<div class="empty"><strong>Archivio vuoto</strong>Aggiungi le credenziali dei tuoi siti: vengono cifrate prima di partire.</div>';
+    if(vault.length){
+      box.innerHTML = '<div class="empty"><strong>La ricerca nasconde ' +
+        vault.length + (vault.length === 1 ? ' voce' : ' voci') + '</strong>' +
+        'Il filtro attivo è "' + esc(q) + '".<br><br>' +
+        '<button class="btn" id="btnClearVSearch">Svuota la ricerca</button></div>';
+      const b = $("btnClearVSearch");
+      if(b) b.addEventListener("click", function(){ $("vsearch").value = ""; renderVault(); });
+    }else{
+      box.innerHTML = '<div class="empty"><strong>Archivio vuoto</strong>Aggiungi le credenziali dei tuoi siti: vengono cifrate prima di partire.</div>';
+    }
     return;
   }
 

@@ -486,6 +486,12 @@
     </div>
 
     <div class="field">
+      <label>Diagnostica</label>
+      <button class="btn" id="btnDiag">Prova la connessione al database</button>
+      <p class="hint" id="diagOut" style="margin:10px 0 0"></p>
+    </div>
+
+    <div class="field">
       <label>Lista programmi</label>
       <button class="btn ghost danger" id="btnReset">Ripristina la lista iniziale</button>
     </div>
@@ -774,16 +780,18 @@ function saveApps(){
   });
 }
 async function saveVault(){
-  if(!masterPw){ toast("Sessione scaduta: rientra con la password"); return; }
+  if(!masterPw) return {ok:false, msg:"Sessione scaduta: rientra con la password"};
   const rec = await sealVault(masterPw, vault);
   localStorage.setItem(K_VAULT, JSON.stringify(rec));
   if(ref){
     try{
       await ref.child("vault").set(rec);
     }catch(err){
-      toast("Password non salvata sul database: " + (err && err.message ? err.message : "errore"));
+      return {ok:false, msg:"Salvata solo su questo dispositivo — il database ha risposto: " +
+                            (err && err.message ? err.message : "errore")};
     }
   }
+  return {ok:true};
 }
 
 /* ─────────── viste ─────────── */
@@ -1096,8 +1104,9 @@ $("btnSaveEntry").addEventListener("click", async function(){
   const wasEdit = !!editingEntry;
   if(editingEntry) Object.assign(editingEntry, data);
   else vault.push(Object.assign({id:uid()}, data));
-  await saveVault(); renderVault(); closeModals();
-  toast(wasEdit ? "Voce aggiornata" : "Voce salvata");
+  const res = await saveVault();
+  renderVault(); closeModals();
+  toast(res.ok ? (wasEdit ? "Voce aggiornata" : "Voce salvata") : res.msg);
  }catch(err){
   toast("Salvataggio non riuscito: " + (err && err.message ? err.message : "errore"));
  }
@@ -1107,7 +1116,9 @@ $("btnDelEntry").addEventListener("click", async function(){
   if(editingEntry && confirm('Eliminare "' + editingEntry.site + '" dall\'archivio?')){
     const id = editingEntry.id;
     vault = vault.filter(function(e){ return e.id !== id; });
-    await saveVault(); renderVault(); closeModals(); toast("Voce eliminata");
+    const res = await saveVault();
+    renderVault(); closeModals();
+    toast(res.ok ? "Voce eliminata" : res.msg);
   }
 });
 
@@ -1183,6 +1194,26 @@ $("btnChangePw").addEventListener("click", async function(){
   await saveVault();               // ricifra l'archivio con la nuova chiave
   $("sOld").value = ""; $("sNew").value = "";
   closeModals(); toast("Password aggiornata");
+});
+
+$("btnDiag").addEventListener("click", async function(){
+  const out = $("diagOut");
+  const user = fbReady && firebase.auth().currentUser;
+  const lines = [];
+  lines.push("SDK Firebase: " + (fbReady ? "caricato" : "NON caricato"));
+  lines.push("Autenticato: " + (user ? user.email : "no"));
+  lines.push("Cifratura forte: " + (SUB ? "sì" : "no (serve https)"));
+  lines.push("Stato rete: " + (online ? "connesso" : "offline"));
+  lines.push("Voci in archivio: " + vault.length);
+  out.innerHTML = lines.join("<br>") + "<br>Scrittura di prova…";
+  if(!ref){ out.innerHTML = lines.join("<br>") + "<br><b>Nessun collegamento al database.</b>"; return; }
+  try{
+    await ref.child("diagnostica").set({ts:Date.now()});
+    out.innerHTML = lines.join("<br>") + "<br><b>Scrittura riuscita.</b>";
+  }catch(err){
+    out.innerHTML = lines.join("<br>") + "<br><b>Scrittura RIFIUTATA:</b> " +
+                    esc(err && err.message ? err.message : "errore");
+  }
 });
 
 $("btnReset").addEventListener("click", function(){

@@ -127,6 +127,13 @@
   .tab:hover{color:var(--text)}
   .tab.on{background:var(--card);border-color:var(--line);color:var(--text)}
   .tabs .spacer{flex:1}
+  .tab-count{
+    display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:6px;
+    border-radius:999px;font-size:.72rem;font-weight:700;background:var(--bg-2);
+    border:1px solid var(--line);color:var(--muted-text);vertical-align:1px;
+  }
+  .tab-count:empty{display:none}
+  .tab.on .tab-count{color:var(--accent);border-color:#5a4e3c}
   .status{
     font-size:.78rem;color:var(--muted-text);display:flex;align-items:center;gap:7px;
     white-space:nowrap;
@@ -213,6 +220,22 @@
   }
   .mini:hover{color:var(--text);border-color:#5a4e3c}
   .mini.del:hover{color:var(--danger);border-color:var(--danger)}
+  .mini.arch:hover,.mini.restore:hover{color:var(--accent);border-color:var(--accent)}
+
+  /* ─────────── archivio ─────────── */
+  .card.archived{background:transparent;border-style:dashed}
+  .card.archived .icon{filter:grayscale(1) opacity(.7)}
+  .card.archived h3{color:var(--muted-text)}
+  .card.archived:hover{background:var(--card)}
+  .card.archived:hover .icon{filter:none}
+  .card.archived:hover h3{color:var(--text)}
+  .arch-date{
+    font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;font-weight:600;
+    color:var(--muted-text);border:1px solid var(--line);padding:4px 9px;border-radius:7px;
+  }
+  .restore-btn{
+    position:relative;z-index:3;align-self:flex-start;margin-top:4px;
+  }
 
   .card.add{
     align-items:center;justify-content:center;text-align:center;gap:8px;
@@ -348,6 +371,7 @@
 
   <nav class="tabs">
     <button class="tab on" data-view="hub">Programmi</button>
+    <button class="tab" data-view="archive">Archivio<span class="tab-count" id="archCount"></span></button>
     <button class="tab" data-view="vault">Password</button>
     <span class="spacer"></span>
     <span class="status" id="status"><span class="dot" id="dot"></span><span id="statusText">sincronizzato</span></span>
@@ -367,6 +391,20 @@
       <button class="btn primary" id="btnAddApp">+ Aggiungi programma</button>
     </div>
     <div id="board"></div>
+  </section>
+
+  <section id="viewArchive" style="display:none">
+    <div class="toolbar">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="asearch" type="search" name="hub-filtro-archiviati" placeholder="Cerca tra gli archiviati…"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               data-lpignore="true" data-1p-ignore data-form-type="other">
+      </div>
+      <div class="count" id="acount"></div>
+    </div>
+    <div id="archBoard"></div>
+    <div class="notice">I programmi archiviati spariscono dalla pagina principale ma non vengono cancellati: restano apribili da qui, le password collegate restano al loro posto e con <strong>Ripristina</strong> tornano nel loro gruppo.</div>
   </section>
 
   <section id="viewVault" style="display:none">
@@ -429,6 +467,7 @@
     <label class="check"><input type="checkbox" id="fLocked"> Richiede un codice d'accesso</label>
     <div class="sheet-actions">
       <button class="btn ghost danger left" id="btnDelApp" style="display:none">Elimina</button>
+      <button class="btn ghost" id="btnArchApp" style="display:none">Archivia</button>
       <button class="btn ghost" data-close>Annulla</button>
       <button class="btn primary" id="btnSaveApp">Salva</button>
     </div>
@@ -701,12 +740,12 @@ async function unlock(pw){
 
   $("lock").style.display = "none";
   $("app").style.display = "";
-  $("search").value = ""; $("vsearch").value = "";
+  $("search").value = ""; $("vsearch").value = ""; $("asearch").value = "";
   renderApps(); renderVault(); renderCryptoNote();
   // Chrome può riempire le caselle di ricerca subito dopo il caricamento: le riazzero
   setTimeout(function(){
-    if($("search").value || $("vsearch").value){
-      $("search").value = ""; $("vsearch").value = "";
+    if($("search").value || $("vsearch").value || $("asearch").value){
+      $("search").value = ""; $("vsearch").value = ""; $("asearch").value = "";
       renderApps(); renderVault();
     }
   }, 700);
@@ -825,22 +864,27 @@ Array.prototype.forEach.call(document.querySelectorAll(".tab[data-view]"), funct
     const v = t.dataset.view;
     if(v === "vault"){ $("vsearch").value = ""; renderVault(); }
     if(v === "hub"){ $("search").value = ""; renderApps(); }
-    $("viewHub").style.display   = v === "hub"   ? "" : "none";
-    $("viewVault").style.display = v === "vault" ? "" : "none";
+    if(v === "archive"){ $("asearch").value = ""; renderArchive(); }
+    $("viewHub").style.display     = v === "hub"     ? "" : "none";
+    $("viewArchive").style.display = v === "archive" ? "" : "none";
+    $("viewVault").style.display   = v === "vault"   ? "" : "none";
   });
 });
 
 /* ─────────── programmi ─────────── */
-function buildCard(app, i){
+function buildCard(app, i, archived){
   const todo = !app.url || app.url === "#";
   const el = document.createElement("div");
-  el.className = "card" + (todo ? " todo" : "");
+  el.className = "card" + (todo ? " todo" : "") + (archived ? " archived" : "");
   el.style.animationDelay = (0.06 + i * 0.04) + "s";
 
   const tags = (app.tags || []).map(function(t){ return '<span class="tag">' + esc(t) + '</span>'; }).join("");
   const warn = todo ? '<span class="tag warn">da impostare</span>' : "";
   const lock = app.locked ? '<span class="lock-pill" title="Richiede un codice d\'accesso">🔒 Codice</span>' : "";
-  const tagRow = (tags || warn) ? '<div class="tags">' + tags + warn + '</div>' : "";
+  const since = (archived && app.archivedAt)
+    ? '<span class="arch-date">archiviato il ' + new Date(app.archivedAt).toLocaleDateString("it-IT") + '</span>'
+    : "";
+  const tagRow = (tags || warn || since) ? '<div class="tags">' + since + tags + warn + '</div>' : "";
 
   const hit = todo
     ? '<span class="card-hit"></span>'
@@ -849,6 +893,9 @@ function buildCard(app, i){
   el.innerHTML =
     hit +
     '<div class="card-actions">' +
+      (archived
+        ? '<button class="mini restore" type="button" title="Ripristina">↺</button>'
+        : '<button class="mini arch" type="button" title="Archivia">🗄</button>') +
       '<button class="mini edit" type="button" title="Modifica">✎</button>' +
       '<button class="mini del" type="button" title="Elimina">✕</button>' +
     '</div>' +
@@ -861,14 +908,25 @@ function buildCard(app, i){
     '</div>' +
     '<h3>' + esc(app.name) + '</h3>' +
     (app.desc ? '<p>' + esc(app.desc) + '</p>' : "") +
+    (archived ? '<button class="btn sm restore-btn" type="button">↺ Ripristina</button>' : "") +
     tagRow;
+
+  const archBtn = el.querySelector(".mini.arch");
+  if(archBtn) archBtn.addEventListener("click", function(e){
+    e.preventDefault(); e.stopPropagation(); setArchived(app.id, true);
+  });
+  Array.prototype.forEach.call(el.querySelectorAll(".mini.restore, .restore-btn"), function(b){
+    b.addEventListener("click", function(e){
+      e.preventDefault(); e.stopPropagation(); setArchived(app.id, false);
+    });
+  });
 
   el.querySelector(".edit").addEventListener("click", function(e){
     e.preventDefault(); e.stopPropagation(); openAppModal(app.id);
   });
   el.querySelector(".del").addEventListener("click", function(e){
     e.preventDefault(); e.stopPropagation();
-    if(confirm('Eliminare "' + app.name + '" dall\'hub?')){
+    if(confirm('Eliminare definitivamente "' + app.name + '" dall\'hub?')){
       apps = apps.filter(function(x){ return x.id !== app.id; });
       saveApps(); renderApps(); toast("Programma eliminato");
     }
@@ -886,10 +944,8 @@ function renderApps(){
   const q = $("search").value.trim().toLowerCase();
   board.innerHTML = "";
 
-  const list = apps.filter(function(app){
-    const hay = [app.name, app.desc, (app.tags||[]).join(" "), app.group].join(" ").toLowerCase();
-    return hay.indexOf(q) !== -1;
-  });
+  const active = apps.filter(function(app){ return !app.archived; });
+  const list = active.filter(function(app){ return matches(app, q); });
   $("count").textContent = list.length + (list.length === 1 ? " programma" : " programmi");
 
   const groups = {};
@@ -911,9 +967,11 @@ function renderApps(){
   });
 
   if(!list.length){
-    board.innerHTML = apps.length
+    board.innerHTML = active.length
       ? '<div class="empty"><strong>Nessun programma trovato</strong>Prova con un\'altra parola.</div>'
-      : '<div class="empty"><strong>L\'hub è vuoto</strong>Aggiungi il primo programma per iniziare.</div>';
+      : (apps.length
+          ? '<div class="empty"><strong>Tutti i programmi sono in archivio</strong>Ripristinane uno dalla scheda Archivio, oppure aggiungine uno nuovo.</div>'
+          : '<div class="empty"><strong>L\'hub è vuoto</strong>Aggiungi il primo programma per iniziare.</div>');
   }
 
   const addWrap = document.createElement("div");
@@ -931,6 +989,60 @@ function renderApps(){
   $("groupList").innerHTML = apps.map(function(a){ return a.group; })
     .filter(function(g){ if(!g || seen[g]) return false; seen[g] = 1; return true; })
     .map(function(g){ return '<option value="' + esc(g) + '">'; }).join("");
+
+  renderArchive();
+}
+
+function matches(app, q){
+  const hay = [app.name, app.desc, (app.tags||[]).join(" "), app.group].join(" ").toLowerCase();
+  return hay.indexOf(q) !== -1;
+}
+
+/* ─────────── archivio ─────────── */
+function renderArchive(){
+  const board = $("archBoard");
+  const q = $("asearch").value.trim().toLowerCase();
+  const archived = apps.filter(function(app){ return app.archived; });
+  const list = archived
+    .filter(function(app){ return matches(app, q); })
+    .sort(function(a, b){ return (b.archivedAt || 0) - (a.archivedAt || 0); });
+
+  $("archCount").textContent = archived.length ? archived.length : "";
+  $("acount").textContent = list.length + (list.length === 1 ? " archiviato" : " archiviati");
+  board.innerHTML = "";
+
+  if(!list.length){
+    board.innerHTML = archived.length
+      ? '<div class="empty"><strong>Nessun archiviato trovato</strong>Prova con un\'altra parola.</div>'
+      : '<div class="empty"><strong>L\'archivio è vuoto</strong>Passa sopra una card nella pagina Programmi e premi 🗄 per archiviarla.</div>';
+    return;
+  }
+
+  const groups = {};
+  list.forEach(function(app){
+    const g = app.group || "Generale";
+    (groups[g] = groups[g] || []).push(app);
+  });
+  let idx = 0;
+  Object.keys(groups).forEach(function(g){
+    const title = document.createElement("div");
+    title.className = "group-title";
+    title.textContent = g;
+    board.appendChild(title);
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    groups[g].forEach(function(app){ grid.appendChild(buildCard(app, idx++, true)); });
+    board.appendChild(grid);
+  });
+}
+
+function setArchived(id, flag){
+  const app = apps.filter(function(a){ return a.id === id; })[0];
+  if(!app) return;
+  if(flag){ app.archived = true; app.archivedAt = Date.now(); }
+  else{ delete app.archived; delete app.archivedAt; }
+  saveApps(); renderApps();
+  toast(flag ? '"' + app.name + '" archiviato' : '"' + app.name + '" è tornato tra i programmi');
 }
 
 const EMOJI = ["⚽","🏆","👥","📒","🗂️","💶","💰","📊","📈","🧾","📅","🗓️","⏱️","📝","✅","🔧","⚙️","🛠️","🍽️","🍕","🎪","🎟️","🎨","📸","🎧","🏋️","🥇","📍","🚀","🌐","💡","🔒","📦","🧠","📮","🏠"];
@@ -969,6 +1081,8 @@ function openAppModal(id){
   $("fLocked").checked = editingApp ? !!editingApp.locked : false;
   markEmoji();
   $("btnDelApp").style.display = editingApp ? "" : "none";
+  $("btnArchApp").style.display = editingApp ? "" : "none";
+  $("btnArchApp").textContent = (editingApp && editingApp.archived) ? "↺ Ripristina" : "🗄 Archivia";
   $("appModal").classList.add("on");
   setTimeout(function(){ $("fName").focus(); }, 60);
 }
@@ -992,6 +1106,13 @@ $("btnSaveApp").addEventListener("click", function(){
   else apps.push(Object.assign({id:uid()}, data));
   saveApps(); renderApps(); closeModals();
   toast(wasEdit ? "Programma aggiornato" : "Programma aggiunto");
+});
+
+$("btnArchApp").addEventListener("click", function(){
+  if(!editingApp) return;
+  const id = editingApp.id, flag = !editingApp.archived;
+  closeModals();
+  setArchived(id, flag);
 });
 
 $("btnDelApp").addEventListener("click", function(){
@@ -1080,10 +1201,13 @@ function appById(id){
 function fillAppSelect(selected){
   const sel = $("eApp");
   const groups = {};
+  const archived = [];
   apps.forEach(function(a){
+    if(a.archived){ archived.push(a); return; }
     const g = a.group || "Generale";
     (groups[g] = groups[g] || []).push(a);
   });
+  if(archived.length) groups["Archiviati"] = archived;
   let html = '<option value="">— nessuno (sito esterno)</option>';
   Object.keys(groups).forEach(function(g){
     html += '<optgroup label="' + esc(g) + '">';
@@ -1269,6 +1393,7 @@ $("btnAddApp").addEventListener("click", function(){ openAppModal(); });
 $("btnAddEntry").addEventListener("click", function(){ openEntryModal(); });
 $("search").addEventListener("input", renderApps);
 $("vsearch").addEventListener("input", renderVault);
+$("asearch").addEventListener("input", renderArchive);
 
 document.addEventListener("keydown", function(e){
   if(e.key === "Escape"){ closeModals(); return; }
@@ -1276,7 +1401,9 @@ document.addEventListener("keydown", function(e){
   const inField = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
   if(e.key === "/" && !inField){
     e.preventDefault();
-    ($("viewVault").style.display === "none" ? $("search") : $("vsearch")).focus();
+    if($("viewVault").style.display !== "none") $("vsearch").focus();
+    else if($("viewArchive").style.display !== "none") $("asearch").focus();
+    else $("search").focus();
   }
 });
 
